@@ -1,10 +1,5 @@
 package com.jmatio.types;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-
-
 public class MLArray
 {
     public static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger( MLArray.class.getName() );
@@ -59,6 +54,16 @@ public class MLArray
         this.type = type;
         this.attributes = attributes;
     }
+    
+    /**
+     * Gets array name
+     * 
+     * @return - array name
+     */
+    public String getName()
+    {
+        return name;
+    }
     public int getFlags()
     { 
         int flags = type & mtFLAG_TYPE | attributes & 0xffffff00;
@@ -67,19 +72,7 @@ public class MLArray
     }
     public byte[] getNameToByteArray()
     {
-        ByteArrayOutputStream baos;
-        
-        DataOutputStream dos = new DataOutputStream( baos = new ByteArrayOutputStream() );
-        try
-        {
-            dos.writeBytes(name);
-        }
-        catch (IOException e)
-        {
-            logger.error("Could not write name to byte array: " + e);
-            return new byte[0];
-        }
-        return baos.toByteArray();
+        return name.getBytes();
     }
     
     public int[] getDimensions()
