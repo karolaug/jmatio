@@ -10,6 +10,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -39,7 +41,7 @@ public class MatFileReader
     /**
      * Container for red <code>MLArray</code>s
      */
-    private ArrayList<MLArray> data;
+    private Map<String, MLArray> data;
     /**
      * When set to true, byte-swapping is required to interpret data correctly
      */
@@ -80,7 +82,7 @@ public class MatFileReader
      */
     private MatFileReader(InputStream is) throws IOException
     {
-        data = new ArrayList<MLArray>();
+        data = new LinkedHashMap<String, MLArray>();
         
         readHeader(is);
 
@@ -100,11 +102,37 @@ public class MatFileReader
         return matFileHeader;
     }
     /**
-     * Gets list of <code>MLArray</code> objects that were inside MAT-file
+     * Returns list of <code>MLArray</code> objects that were inside MAT-file
      * 
      * @return - a <code>ArrayList</code>
+     * @deprecated use <code>getContent</code> which returs a Map to provide 
+     *             easier access to <code>MLArray</code>s contained in MAT-file
      */
     public ArrayList<MLArray> getData()
+    {
+        return new ArrayList<MLArray>( data.values() );
+    }
+    /**
+     * Returns the value to which the red file maps the specified array name.
+     * 
+     * Returns <code>null</code> if the file contains no content for this name.
+     * 
+     * @param - array name
+     * @return - the <code>MLArray</code> to which this file maps the specified name, 
+     *           or null if the file contains no content for this name.
+     */
+    public MLArray getMLArray( String name )
+    {
+        return data.get( name );
+    }
+    /**
+     * Returns a map of <code>MLArray</code> objects that were inside MAT-file.
+     * 
+     * MLArrays are mapped with MLArrays' names
+     *  
+     * @return - a <code>Map</code> of MLArrays mapped with theid names.
+     */
+    public Map<String, MLArray> getContent()
     {
         return data;
     }
@@ -171,7 +199,7 @@ public class MatFileReader
                 byte[] buffer = new byte[tag.size];
                 is.read( buffer );
                 MLArray element = readMatrix( new DataInputStream( new ByteArrayInputStream(buffer) ) );
-                data.add(element);
+                data.put( element.getName(), element );
                 break;
             default:
                 throw new MatlabIOException("Incorrect data tag: " + tag);
