@@ -1,5 +1,7 @@
 package com.jmatio.types;
 
+import java.util.Arrays;
+
 public class MLChar extends MLArray implements GenericArrayCreator<Character>
 {
     Character[] chars;
@@ -39,6 +41,35 @@ public class MLChar extends MLArray implements GenericArrayCreator<Character>
     {
         return chars;
     }
+    
+    @Override
+    public boolean equals(Object o)
+    {
+        if ( o instanceof MLChar )
+        {
+            return Arrays.equals( chars, ((MLChar)o).chars );
+        }
+        return super.equals( o );
+    }
+    
+    /**
+     * Gets the m-th character matrix's row as <code>String</code>.
+     * 
+     * @param m - row number
+     * @return - <code>String</code>
+     */
+    public String getString( int m )
+    {
+        StringBuffer charbuff = new StringBuffer();
+        
+        for (int n = 0; n < getN(); n++)
+        {
+            charbuff.append(getChar(m, n));
+        }
+        
+        return charbuff.toString();
+    }
+    
     public String contentToString()
     {
         StringBuffer sb = new StringBuffer();
