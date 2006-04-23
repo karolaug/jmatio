@@ -1,5 +1,7 @@
 package com.jmatio.types;
 
+import java.util.Arrays;
+
 public abstract class MLNumericArray<T extends Number> extends MLArray implements GenericArrayCreator<T>
 {
     private T[] real;
@@ -97,4 +99,15 @@ public abstract class MLNumericArray<T extends Number> extends MLArray implement
         }
         return sb.toString();
     }
+    @Override
+    public boolean equals(Object o)
+    {
+        if ( o instanceof  MLNumericArray )
+        {
+            return Arrays.equals( real, ((MLNumericArray)o).real )
+                    && Arrays.equals( imaginary, ((MLNumericArray)o).imaginary );
+        }
+        return super.equals( o );
+    }
+    
 }
