@@ -2,7 +2,7 @@ package com.jmatio.io;
 
 import com.jmatio.common.MatDataTypes;
 
-public class MatTag
+class MatTag
 {
 
     public int type;
@@ -43,36 +43,9 @@ public class MatTag
     }
     public int sizeOf()
     {
-        return sizeOf(type);
+        return MatDataTypes.sizeOf(type);
     }
     
-    public static int sizeOf(int type)
-    {
-        int size;
-        switch ( type )
-        {
-            case MatDataTypes.miINT8:
-            case MatDataTypes.miUINT8:
-                size = 1;
-                break;
-            case MatDataTypes.miINT16:
-            case MatDataTypes.miUINT16:
-                size = 2;
-                break;
-            case MatDataTypes.miINT32:
-            case MatDataTypes.miUINT32:
-                size = 4;
-                break;
-            case MatDataTypes.miDOUBLE:
-                size = 8;
-                break;
-            default:
-                size = 1;
-            
-        }
-        
-        return size;
-    }
     public static String typeToString(int type)
     {
         String s;
