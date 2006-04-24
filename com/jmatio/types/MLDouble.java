@@ -43,7 +43,19 @@ public class MLDouble extends MLNumericArray<Double>
     {
         super(name, MLArray.mxDOUBLE_CLASS, vals, m );
     }
-
+    /**
+     * <a href="http://math.nist.gov/javanumerics/jama/">Jama</a> [math.nist.gov] style: 
+     * construct a 2D real matrix from <code>double[][]</code>
+     * 
+     * Note: array is converted to Double[]
+     * 
+     * @param name - array name
+     * @param vals - two-dimensional array of values
+     */
+    public MLDouble( String name, double[][] vals )
+    {
+        this( name, double2DToDouble(vals), vals.length );
+    }
     /**
      * <a href="http://math.nist.gov/javanumerics/jama/">Jama</a> [math.nist.gov] style: 
      * construct a matrix from a one-dimensional packed array
@@ -98,8 +110,22 @@ public class MLDouble extends MLNumericArray<Double>
         }
         return dest;
     }
-
-
-
-
+    /**
+     * Converts double[][] to Double[]
+     * 
+     * @param dd
+     * @return
+     */
+    private static Double[] double2DToDouble ( double[][] dd )
+    {
+        Double[] d = new Double[ dd.length*dd[0].length ];
+        for ( int n = 0; n < dd[0].length; n++ )
+        {
+            for ( int m = 0; m < dd.length; m++ )
+            {
+                d[ m+n*dd.length ] = dd[m][n]; 
+            }
+        }
+        return d;
+    }
 }
