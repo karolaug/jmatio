@@ -48,6 +48,11 @@ public class MatFileReader
     private boolean byteSwap;
     
     /**
+     * Array name filter
+     */
+    private MatFileFilter filter;
+    
+    /**
      * Creates instance of <code>MatFileReader</code> and reads MAT-file 
      * from location given as <code>fileName</code>.
      * 
@@ -57,19 +62,35 @@ public class MatFileReader
      */
     public MatFileReader(String fileName) throws FileNotFoundException, IOException
     {
-        this ( new DataInputStream( new FileInputStream( new File(fileName) ) ) );
+        this ( fileName, new MatFileFilter() );
+    }
+    /**
+     * Creates instance of <code>MatFileReader</code> and reads MAT-file 
+     * from location given as <code>fileName</code>.
+     * 
+     * Results are filtered by <code>MatFileFilter</code>. Arrays that do not meet
+     * filter match condition will not be avalable in results.
+     * 
+     * @param fileName - MAT-file path
+     * @param filter - array name filter
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    public MatFileReader(String fileName, MatFileFilter filter ) throws FileNotFoundException, IOException
+    {
+        this( new DataInputStream( new FileInputStream( new File(fileName) ) ), filter );
     }
     /**
      * Creates instance of <code>MatFileReader</code> and reads MAT-file 
      * from <code>file</code>.
      * 
-     * @param file - MAT-file
+     * @param file - MAT-file path
      * @throws FileNotFoundException
      * @throws IOException
      */
     public MatFileReader(File file) throws FileNotFoundException, IOException
     {
-        this ( new DataInputStream( new FileInputStream(file) ) );
+        this ( new DataInputStream( new FileInputStream(file) ), new MatFileFilter() );
         
     }
     /**
@@ -77,10 +98,12 @@ public class MatFileReader
      * from <code>InputStream</code>.
      * 
      * @param is - MAT-file data <code>InputStream</code>
+     * @param filter - a filter for file contents
      * @throws IOException
      */
-    private MatFileReader(InputStream is) throws IOException
+    private MatFileReader(InputStream is, MatFileFilter filter) throws IOException
     {
+        this.filter = filter;
         data = new LinkedHashMap<String, MLArray>();
         
         readHeader(is);
@@ -197,15 +220,30 @@ public class MatFileReader
             case MatDataTypes.miMATRIX:
                 byte[] buffer = new byte[tag.size];
                 is.read( buffer );
-                MLArray element = readMatrix( new DataInputStream( new ByteArrayInputStream(buffer) ) );
-                data.put( element.getName(), element );
+                //read in the matrix
+                MLArray element = readMatrix( new DataInputStream( new ByteArrayInputStream(buffer) ), true );
+                if ( element != null )
+                {
+                    data.put( element.getName(), element );
+                }
                 break;
             default:
                 throw new MatlabIOException("Incorrect data tag: " + tag);
                     
         }
     }
-    private MLArray readMatrix(InputStream is) throws IOException
+    /**
+     * Reads miMATRIX from from input stream.
+     * 
+     * If reading was not finished (which is normal for filtered results)
+     * returns null.
+     * 
+     * @param is - Input stream
+     * @param isRoot - when <code>true</code> informs that if this is a top level matrix 
+     * @return - <code>MLArray</code> or <code>null</code> if  matrix does not match <code>filter</code>
+     * @throws IOException
+     */
+    private MLArray readMatrix(InputStream is, boolean isRoot ) throws IOException
     {
         //result
         MLArray mlArray;
@@ -222,6 +260,12 @@ public class MatFileReader
         
         //read arrayName
         String name = readName(is);
+        
+        if ( isRoot && !filter.matches(name) )
+        {
+            return null;
+        }
+        
 
         //read data >> consider changing it to stategy pattern
         switch ( type )
@@ -260,7 +304,7 @@ public class MatFileReader
                         tag = new ISMatTag(is);
                         byte[] buffer = new byte[tag.size];
                         is.read(buffer);
-                        MLArray fieldValue = readMatrix(new DataInputStream( new ByteArrayInputStream(buffer) ));
+                        MLArray fieldValue = readMatrix(new DataInputStream( new ByteArrayInputStream(buffer) ), false);
                         struct.setField(fieldNames[i], fieldValue, index);
                     }
                 }
@@ -274,7 +318,7 @@ public class MatFileReader
                     tag = new ISMatTag(is);
                     byte[] buffer = new byte[tag.size];
                     is.read(buffer);
-                    MLArray cellmatrix = readMatrix(new DataInputStream( new ByteArrayInputStream(buffer) ));
+                    MLArray cellmatrix = readMatrix(new DataInputStream( new ByteArrayInputStream(buffer) ), false);
                     cell.set(cellmatrix, i);
                 }
                 mlArray = cell;

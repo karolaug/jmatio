@@ -7,9 +7,11 @@ import junit.framework.JUnit4TestAdapter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import com.jmatio.io.MatFileFilter;
 import com.jmatio.io.MatFileReader;
 import com.jmatio.io.MatFileWriter;
 import com.jmatio.types.MLArray;
@@ -118,9 +120,67 @@ public class MatIOTest
         //test new constructor
         MLArray mlDouble2D = new MLDouble(name, src2D );
         //compare it with original
-        assertEquals( mlDouble2D, mlDouble );
+        assertEquals( "Test if double[][] constructor produces the same matrix as normal one", mlDouble2D, mlDouble );
     }
     
+    /**
+     * Test <code>MatFileFilter</code> options
+     */
+    @Test public void filterTest()
+    {
+        //create new filter instance
+        MatFileFilter filter = new MatFileFilter();
+        
+        //empty filter should match all patterns
+        assertEquals("Test if empty filter matches all patterns", true, filter.matches("any") );
+    
+        //now add something to the filter
+        filter.addArrayName("my_array");
+        
+        //test if filter matches my_array
+        assertEquals("Test if filter matches given array name", true, filter.matches("my_array") );
+        
+        //test if filter returns false if does not match given name
+        assertEquals("Test if filter does not match non existent name", false, filter.matches("dummy") );
+    
+    }
+    
+    /**
+     * Tests filtered reading
+     * 
+     * @throws IOException
+     */
+    @Test public void filteredReadingTest() throws IOException
+    {
+        //1. First create arrays
+        //array name
+        String name = "doublearr";
+        String name2 = "dummy";
+        //file name in which array will be storred
+        String fileName = "filter.mat";
+
+        double[] src = new double[] { 1.3, 2.0, 3.0, 4.0, 5.0, 6.0 };
+        MLDouble mlDouble = new MLDouble( name, src, 3 );
+        MLChar mlChar = new MLChar( name2, "I am dummy" );
+        
+        //2. write arrays to file
+        ArrayList<MLArray> list = new ArrayList<MLArray>();
+        list.add( mlDouble );
+        list.add( mlChar );
+        new MatFileWriter( fileName, list );
+        
+        //3. create new filter instance
+        MatFileFilter filter = new MatFileFilter();
+        filter.addArrayName( name );
+        
+        //4. read array form file
+        MatFileReader mfr = new MatFileReader( fileName, filter );
+        
+        //check size of
+        Map content = mfr.getContent();
+        assertEquals("Test if only one array was red", 1, content.size() );
+        
+    }
     
     public static junit.framework.Test suite()
     {
