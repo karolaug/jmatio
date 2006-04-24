@@ -58,7 +58,6 @@ public class MatFileReader
     public MatFileReader(String fileName) throws FileNotFoundException, IOException
     {
         this ( new DataInputStream( new FileInputStream( new File(fileName) ) ) );
-        
     }
     /**
      * Creates instance of <code>MatFileReader</code> and reads MAT-file 
@@ -281,23 +280,25 @@ public class MatFileReader
                 mlArray = cell;
                 break;
             case MLArray.mxDOUBLE_CLASS:
+                
+                double[] ad;
                 MLDouble mldouble = new MLDouble(name, dims, type, attributes);
                 
                 //read real
                 tag = new ISMatTag(is);
-                double[] ad = tag.readToDoubleArray();
+                ad = tag.readToDoubleArray();
                 for ( int i = 0; i < ad.length; i++ )
                 {
-                    mldouble.setReal( new Double(ad[i]), i );
+                    mldouble.setReal( ad[i], i );
                 }
                 //read complex
                 if ( mldouble.isComplex() )
                 {
                     tag = new ISMatTag(is);
-                    double[] aid = tag.readToDoubleArray();
-                    for ( int i = 0; i < aid.length; i++ )
+                    ad = tag.readToDoubleArray();
+                    for ( int i = 0; i < ad.length; i++ )
                     {
-                        mldouble.setReal( new Double(aid[i]), i );
+                        mldouble.setReal( ad[i], i );
                     }
                 }
                 mlArray = mldouble;
@@ -404,7 +405,12 @@ public class MatFileReader
 
         return s;
     }
-
+    /**
+     * 
+     * @param is
+     * @return
+     * @throws IOException
+     */
     private int readInt32(InputStream is) throws IOException
     {
         byte[] buffer = new byte[4];
@@ -449,36 +455,16 @@ public class MatFileReader
         if ( (char)endianIndicator[0] == 'I' && (char)endianIndicator[1] == 'M')
         {
             byteSwap = true;
-            swapBuffer(bversion);
+            version = bversion[1] & 0xff | bversion[0] << 8;
         }
         else
         {
             byteSwap = false;
+            version = bversion[0] & 0xff | bversion[1] << 8;
         }
-        version = bversion[0] & 0xff | bversion[1] << 8;
         
         matFileHeader = new MatFileHeader(description, version, endianIndicator);
         logger.debug(matFileHeader);
-    }
-    public void swapBuffer(byte[] buffer)
-    {
-        if ( buffer.length == 1 ) 
-        {
-            return;
-        }
-        if ( buffer.length%2 != 0 )
-        {
-            throw new IllegalArgumentException("Byte array length must by multiplication of 2");
-        }
-        for(int i = 0; i < buffer.length/2; i++)
-        {
-            int src = i;
-            int dest = buffer.length - 1 - i;
-            
-            byte tmp = buffer[dest];
-            buffer[dest] = buffer[src];
-            buffer[src] = tmp;
-        }
     }
     private class ISMatTag extends MatTag
     {
@@ -508,97 +494,65 @@ public class MatFileReader
             }
             setPadding();
         }
-        
-        private void hydrate() throws IOException
-        {
-            if ( data == null )
-            {
-                data = new byte[size];
-                is.read(data);
-                
-                if ( padding > 0 )
-                {
-                    is.skip(padding);
-                }
-            }
-        }
         public double[] readToDoubleArray() throws IOException
         {
-            hydrate();
+            //allocate memory for array elements
             int elements = size/sizeOf();
             double[] ad = new double[elements];
             
-            DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
-            
+            MatFileInputStream mfis = new MatFileInputStream( is, type, byteSwap );
+
             for ( int i = 0; i < elements; i++ )
             {
-                byte[] b = read(dis);
-                
-                if ( b.length < sizeOf(MatDataTypes.miDOUBLE) )
-                {
-                    ad[i] = (double)b[0];
-                }
-                else
-                {
-                    DataInputStream _dis = new DataInputStream(new ByteArrayInputStream(b) );
-                    ad[i] = _dis.readDouble();
-                }
-                
+                ad[i] = mfis.readDouble();
+            }
+            
+            //skip padding
+            if ( padding > 0 )
+            {
+                is.skip(padding);
             }
             return ad;
         }
         public int[] readToIntArray() throws IOException
         {
-            hydrate();
+            //allocate memory for array elements
             int elements = size/sizeOf();
             int[] ai = new int[elements];
             
-            DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
-            
+            MatFileInputStream mfis = new MatFileInputStream( is, type, byteSwap );
+
             for ( int i = 0; i < elements; i++ )
             {
-                byte[] b = read(dis);
-                
-                if ( b.length < sizeOf(MatDataTypes.miUINT32) )
-                {
-                    ai[i] = (int)b[0];
-                }
-                else
-                {
-                    DataInputStream _dis = new DataInputStream(new ByteArrayInputStream(b) );
-                    ai[i] = _dis.readInt();
-                }
+                ai[i] = mfis.readInt();
+            }
+            
+            //skip padding
+            if ( padding > 0 )
+            {
+                is.skip(padding);
             }
             return ai;
         }
         public char[] readToCharArray() throws IOException
         {
-            hydrate();
+            //allocate memory for array elements
             int elements = size/sizeOf();
             char[] ac = new char[elements];
             
-            DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
-            
+            MatFileInputStream mfis = new MatFileInputStream( is, type, byteSwap );
+
             for ( int i = 0; i < elements; i++ )
             {
-                byte[] b = read(dis);
-                DataInputStream _dis = new DataInputStream(new ByteArrayInputStream(b) );
-                
-                ac[i] = (char)_dis.readByte();
+                ac[i] = mfis.readChar();
+            }
+            
+            //skip padding
+            if ( padding > 0 )
+            {
+                is.skip(padding);
             }
             return ac;
         }
-        
-        private byte[] read( InputStream is ) throws IOException
-        {
-            byte[] buffer = new byte[sizeOf()];
-            is.read(buffer);
-            if ( byteSwap )
-            {
-                swapBuffer(buffer);
-            }
-            return buffer;
-        }
-        
     }
 }
