@@ -25,14 +25,42 @@ public class MatDataTypes
     public static final int miUTF16     = 17;
     public static final int miUTF32     = 18;
 
-    public static final int miSIZE_INT32 = 4;
-    public static final int miSIZE_INT16 = 2;
-    public static final int miSIZE_INT8 = 1;
-    public static final int miSIZE_UINT32 = 4;
-    public static final int miSIZE_UINT16 = 2;
-    public static final int miSIZE_UINT8 = 1;
-    public static final int miSIZE_DOUBLE = 8;
-    public static final int miSIZE_CHAR = 1;
+    public static final int miSIZE_INT32    = 4;
+    public static final int miSIZE_INT16    = 2;
+    public static final int miSIZE_INT8     = 1;
+    public static final int miSIZE_UINT32   = 4;
+    public static final int miSIZE_UINT16   = 2;
+    public static final int miSIZE_UINT8    = 1;
+    public static final int miSIZE_DOUBLE   = 8;
+    public static final int miSIZE_CHAR     = 1;
     
+    /**
+     * Return number of bytes for given type.
+     * 
+     * @param type - <code>MatDataTypes</code>
+     * @return
+     */
+    public static int sizeOf(int type)
+    {
+        switch ( type )
+        {
+            case MatDataTypes.miINT8:
+                return miSIZE_INT8;
+            case MatDataTypes.miUINT8:
+                return miSIZE_UINT8;
+            case MatDataTypes.miINT16:
+                return miSIZE_INT16;
+            case MatDataTypes.miUINT16:
+                return miSIZE_UINT16;
+            case MatDataTypes.miINT32:
+                return miSIZE_INT32;
+            case MatDataTypes.miUINT32:
+                return miSIZE_UINT32;
+            case MatDataTypes.miDOUBLE:
+                return miSIZE_DOUBLE;
+            default:
+                return 1;
+        }
+    }
     
 }
