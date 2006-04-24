@@ -20,6 +20,13 @@ For current version please check CVS repository:
 cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/jmatio login
 cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/jmatio co -P JMatIO
 
+Note:
+
+JMatIO uses external libraries:
++ Log4j [http://logging.apache.org/log4j/docs/]
++ JUnit [http://junit.org]
+
+
 Have fun :)
 
 Wojciech Gradkowski
