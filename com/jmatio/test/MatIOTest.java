@@ -81,9 +81,9 @@ public class MatIOTest
         String fileName = "mldouble.mat";
 
         //test column-packed vector
-        double[] src = new double[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
+        double[] src = new double[] { 1.3, 2.0, 3.0, 4.0, 5.0, 6.0 };
         //test 2D array coresponding to test vector
-        double[][] src2D = new double[][] { { 1.0, 4.0 },
+        double[][] src2D = new double[][] { { 1.3, 4.0 },
                                             { 2.0, 5.0 },
                                             { 3.0, 6.0 }
                                         };
@@ -114,11 +114,18 @@ public class MatIOTest
             boolean result = Arrays.equals( src2D[i], ((MLDouble)mlArrayRetrived ).getArray()[i] );
             assertEquals( "2D array match", true, result );
         }
+        
+        //test new constructor
+        MLArray mlDouble2D = new MLDouble(name, src2D );
+        //compare it with original
+        assertEquals( mlDouble2D, mlDouble );
     }
+    
     
     public static junit.framework.Test suite()
     {
         return new JUnit4TestAdapter( MatIOTest.class );
     }
+    
     
 }
