@@ -222,6 +222,11 @@ public abstract class MLNumericArray<T extends Number> extends MLArray implement
         StringBuffer sb = new StringBuffer();
         sb.append(name + " = \n");
         
+        if ( getSize() > 1000 )
+        {
+            sb.append("Cannot display variables with more than 1000 elements.");
+            return sb.toString();
+        }
         for ( int m = 0; m < getM(); m++ )
         {
            sb.append("\t");

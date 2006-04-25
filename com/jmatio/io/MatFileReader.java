@@ -419,7 +419,7 @@ public class MatFileReader
                
         }
         
-        logger.debug(mlArray + "\n" + mlArray.contentToString() );
+        logger.debug("Processed MLArray: " + mlArray.getName() + " = " + mlArray);
         
         return mlArray;
     }
