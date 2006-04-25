@@ -8,7 +8,7 @@ import java.util.Date;
  * Level 5 MAT-files begin with a 128-byte header made up of a 124 byte text field
  * and two, 16-bit flag fields
  * 
- * @author Wojciech Gradkowski <wgradkowski@gmail.com>
+ * @author Wojciech Gradkowski (<a href="mailto:wgradkowski@gmail.com">wgradkowski@gmail.com</a>)
  */
 public class MatFileHeader
 {

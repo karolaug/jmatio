@@ -21,6 +21,7 @@ import java.util.Set;
  * MatFileReader mfr = new MatFileReader( fileName, filter ); * 
  * </code></pre>
  * 
+ * @see com.jmatio.io.MatFileReader
  * @author Wojciech Gradkowski (<a href="mailto:wgradkowski@gmail.com">wgradkowski@gmail.com</a>)
  */
 public class MatFileFilter

@@ -62,5 +62,69 @@ public class MatDataTypes
                 return 1;
         }
     }
+    /**
+     * Get String representation of a data type
+     * 
+     * @param type - data type
+     * @return - String representation
+     */
+    public static String typeToString(int type)
+    {
+        String s;
+        switch (type)
+        {
+            case MatDataTypes.miUNKNOWN:
+                s = "unknown";
+                break;
+            case MatDataTypes.miINT8:
+                s = "int8";
+                break;
+            case MatDataTypes.miUINT8:
+                s = "uint8";
+                break;
+            case MatDataTypes.miINT16:
+                s = "int16";
+                break;
+            case MatDataTypes.miUINT16:
+                s = "uint16";
+                break;
+            case MatDataTypes.miINT32:
+                s = "int32";
+                break;
+            case MatDataTypes.miUINT32:
+                s = "uint32";
+                break;
+            case MatDataTypes.miSINGLE:
+                s = "single";
+                break;
+            case MatDataTypes.miDOUBLE:
+                s = "double";
+                break;
+            case MatDataTypes.miINT64:
+                s = "int64";
+                break;
+            case MatDataTypes.miUINT64:
+                s = "uint64";
+                break;
+            case MatDataTypes.miMATRIX:
+                s = "matrix";
+                break;
+            case MatDataTypes.miCOMPRESSED:
+                s = "compressed";
+                break;
+            case MatDataTypes.miUTF8:
+                s = "uft8";
+                break;
+            case MatDataTypes.miUTF16:
+                s = "utf16";
+                break;
+            case MatDataTypes.miUTF32:
+                s = "utf32";
+                break;
+            default:
+                s = "unknown";
+        }
+        return s;
+    }
     
 }

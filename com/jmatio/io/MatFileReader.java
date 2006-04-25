@@ -28,11 +28,24 @@ import com.jmatio.types.MLStructure;
 /**
  * MAT-file reader. Reads MAT-file into <code>MLArray</code> objects.
  * 
- * @author Wojciech Gradkowski <wgradkowski@gmail.com>
+ * Usage:
+ * <pre><code>
+ * //read in the file
+ * MatFileReader mfr = new MatFileReader( "mat_file.mat" );
+ * 
+ * //get array of a name "my_array" from file
+ * MLArray mlArrayRetrived = mfr.getMLArray( "my_array" );
+ * 
+ * //or get the collection of all arrays that were stored in the file
+ * Map content = mfr.getContent();
+ * </pre></code>
+ * 
+ * @see com.jmatio.io.MatFileFilter
+ * @author Wojciech Gradkowski (<a href="mailto:wgradkowski@gmail.com">wgradkowski@gmail.com</a>)
  */
 public class MatFileReader
 {
-    public static final Logger logger = Logger.getLogger( MatFileReader.class.getName() );
+    private static final Logger logger = Logger.getLogger( MatFileReader.class.getName() );
     
     /**
      * MAT-file header

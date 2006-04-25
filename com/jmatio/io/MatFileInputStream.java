@@ -22,9 +22,10 @@ public class MatFileInputStream extends InputStream
      * Attach MAT-file input stream to <code>InputStream</code>
      * 
      * @param is - input stream
-     * @param type - type of data in the stream (see: <code>MatDataTypes</code>)
+     * @param type - type of data in the stream
      * @param byteSwap - set to <code>true</code> if data requires swapping for
      *                   correct interpretation
+     * @see com.jmatio.common.MatDataTypes
      */
     public MatFileInputStream( InputStream is, int type, boolean byteSwap )
     {

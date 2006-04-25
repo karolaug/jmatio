@@ -23,12 +23,34 @@ import com.jmatio.types.MLStructure;
 /**
  * MAT-file writer.
  * 
+ * Usage:
+ * <pre><code>
+ * //1. First create example arrays
+ * double[] src = new double[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
+ * MLDouble mlDouble = new MLDouble( "double_arr", src, 3 );
+ * MLChar mlChar = new MLChar( "char_arr", "I am dummy" );
+ *         
+ * //2. write arrays to file
+ * ArrayList<MLArray> list = new ArrayList<MLArray>();
+ * list.add( mlDouble );
+ * list.add( mlChar );
  * 
- * @author Wojciech Gradkowski <wgradkowski@gmail.com>
+ * new MatFileWriter( "mat_file.mat", list );
+ * </code></pre>
+ * 
+ * this is "equal" to Matlab commands:
+ * <pre><code>
+ * >> double_arr = [ 1 2; 3 4; 5 6];
+ * >> char_arr = 'I am dummy';
+ * >>
+ * >> save('mat_file.mat', 'double_arr', 'char_arr');
+ * </pre></code>
+ * 
+ * @author Wojciech Gradkowski (<a href="mailto:wgradkowski@gmail.com">wgradkowski@gmail.com</a>)
  */
 public class MatFileWriter
 {
-    public static final Logger logger = Logger.getLogger(MatFileWriter.class);
+    private static final Logger logger = Logger.getLogger(MatFileWriter.class);
     
     /**
      * Writes MLArrays into file given by <code>fileName</code>.
@@ -350,7 +372,7 @@ public class MatFileWriter
      */
     private class OSArrayTag extends MatTag
     {
-
+        private byte[] data;
         /**
          * Creates TAG and stets its <code>size</code> as size of byte array
          * 
@@ -359,14 +381,9 @@ public class MatFileWriter
          */
         public OSArrayTag(int type, byte[] data )
         {
-            super( 0, 0, false);
-            this.type = type;
-            this.size = data.length;
+            super( type, data.length, false);
             this.data = data;
-            
-            setPadding();
         }
-        
         /**
          * Writes tag and data to <code>DataOutputStream</code>. Wites padding if neccesary.
          * 

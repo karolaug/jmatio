@@ -2,21 +2,32 @@ package com.jmatio.io;
 
 import com.jmatio.common.MatDataTypes;
 
+/**
+ * 
+ * @author Wojciech Gradkowski (<a href="mailto:wgradkowski@gmail.com">wgradkowski@gmail.com</a>)
+ */
 class MatTag
 {
-
     public int type;
     public int size;
     public int padding;
     public boolean compressed;
-    public byte[] data;
     
-    
+    /**
+     * @param type
+     * @param size
+     * @param compressed
+     */
     public MatTag(int type, int size, boolean compressed)
     {
+        this.type = type;
+        this.size = size;
         setPadding();
     }
 
+    /**
+     * Calculate padding
+     */
     protected void setPadding()
     {
         //data not packed in the tag
@@ -31,77 +42,26 @@ class MatTag
 //            padding = (b = ( 4-((size/sizeOf()%(4/sizeOf())))*sizeOf() )) != 0 ? 8-b : 0;
             padding = 4-((size/sizeOf()%(4/sizeOf())))*sizeOf();
         }
-        
     }
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
     public String toString()
     {
         String s;
         
-        s = "[tag: " + typeToString(type) + " size: " + size + " padding: " + padding + "]";
+        s = "[tag: " + MatDataTypes.typeToString(type) + " size: " + size + " padding: " + padding + "]";
         
         return s;
     }
+    /**
+     * Get size of single data in this tag.
+     * 
+     * @return - number of bytes for single data
+     */
     public int sizeOf()
     {
         return MatDataTypes.sizeOf(type);
     }
     
-    public static String typeToString(int type)
-    {
-        String s;
-        switch (type)
-        {
-            case MatDataTypes.miUNKNOWN:
-                s = "unknown";
-                break;
-            case MatDataTypes.miINT8:
-                s = "int8";
-                break;
-            case MatDataTypes.miUINT8:
-                s = "uint8";
-                break;
-            case MatDataTypes.miINT16:
-                s = "int16";
-                break;
-            case MatDataTypes.miUINT16:
-                s = "uint16";
-                break;
-            case MatDataTypes.miINT32:
-                s = "int32";
-                break;
-            case MatDataTypes.miUINT32:
-                s = "uint32";
-                break;
-            case MatDataTypes.miSINGLE:
-                s = "single";
-                break;
-            case MatDataTypes.miDOUBLE:
-                s = "double";
-                break;
-            case MatDataTypes.miINT64:
-                s = "int64";
-                break;
-            case MatDataTypes.miUINT64:
-                s = "uint64";
-                break;
-            case MatDataTypes.miMATRIX:
-                s = "matrix";
-                break;
-            case MatDataTypes.miCOMPRESSED:
-                s = "compressed";
-                break;
-            case MatDataTypes.miUTF8:
-                s = "uft8";
-                break;
-            case MatDataTypes.miUTF16:
-                s = "utf16";
-                break;
-            case MatDataTypes.miUTF32:
-                s = "utf32";
-                break;
-            default:
-                s = "unknown";
-        }
-        return s;
-    }
 }
