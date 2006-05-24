@@ -10,8 +10,6 @@ import java.util.Collection;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 
-import org.apache.log4j.Logger;
-
 import com.jmatio.common.MatDataTypes;
 import com.jmatio.types.MLArray;
 import com.jmatio.types.MLCell;
@@ -50,7 +48,7 @@ import com.jmatio.types.MLStructure;
  */
 public class MatFileWriter
 {
-    private static final Logger logger = Logger.getLogger(MatFileWriter.class);
+//    private static final Logger logger = Logger.getLogger(MatFileWriter.class);
     
     /**
      * Writes MLArrays into file given by <code>fileName</code>.
@@ -373,6 +371,7 @@ public class MatFileWriter
     private class OSArrayTag extends MatTag
     {
         private byte[] data;
+        private int padding;
         /**
          * Creates TAG and stets its <code>size</code> as size of byte array
          * 
@@ -381,8 +380,10 @@ public class MatFileWriter
          */
         public OSArrayTag(int type, byte[] data )
         {
-            super( type, data.length, false);
+            super( type, data.length );
             this.data = data;
+            this.padding = getPadding(data.length, false);
+            
         }
         /**
          * Writes tag and data to <code>DataOutputStream</code>. Wites padding if neccesary.

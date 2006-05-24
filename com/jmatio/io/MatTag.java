@@ -8,40 +8,38 @@ import com.jmatio.common.MatDataTypes;
  */
 class MatTag
 {
-    public int type;
-    public int size;
-    public int padding;
-    public boolean compressed;
+    protected int type;
+    protected int size;
     
     /**
      * @param type
      * @param size
      * @param compressed
      */
-    public MatTag(int type, int size, boolean compressed)
+    public MatTag(int type, int size)
     {
         this.type = type;
         this.size = size;
-        setPadding();
     }
 
     /**
      * Calculate padding
      */
-    protected void setPadding()
+    protected int getPadding(int size, boolean compressed)
     {
+        int padding;
         //data not packed in the tag
         if ( !compressed )
         {    
             int b;
-            padding = (b = ((size/sizeOf()%(8/sizeOf())))*sizeOf()) != 0 ? 8-b : 0;
+            padding = ( b = ( ((size/sizeOf())%(8/sizeOf()))*sizeOf() ) ) !=0   ? 8-b : 0;
         }
         else //data _packed_ in the tag (compressed)
         {
-//            int b;
-//            padding = (b = ( 4-((size/sizeOf()%(4/sizeOf())))*sizeOf() )) != 0 ? 8-b : 0;
-            padding = 4-((size/sizeOf()%(4/sizeOf())))*sizeOf();
+            int b;
+            padding = ( b = ( ((size/sizeOf())%(4/sizeOf()))*sizeOf() ) ) !=0   ? 4-b : 0;
         }
+        return padding;
     }
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
@@ -50,7 +48,7 @@ class MatTag
     {
         String s;
         
-        s = "[tag: " + MatDataTypes.typeToString(type) + " size: " + size + " padding: " + padding + "]";
+        s = "[tag: " + MatDataTypes.typeToString(type) + " size: " + size + "]";
         
         return s;
     }

@@ -18,7 +18,7 @@ import java.util.Set;
  * filter.addArrayName( "your_array_name" );
  * 
  * //read array form file (haystack) looking _only_ for pecified array (needle)
- * MatFileReader mfr = new MatFileReader( fileName, filter ); * 
+ * MatFileReader mfr = new MatFileReader( fileName, filter );
  * </code></pre>
  * 
  * @see com.jmatio.io.MatFileReader

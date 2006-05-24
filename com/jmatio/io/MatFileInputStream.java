@@ -1,9 +1,7 @@
 package com.jmatio.io;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 import com.jmatio.common.MatDataTypes;
 
@@ -12,26 +10,22 @@ import com.jmatio.common.MatDataTypes;
  * 
  * @author Wojciech Gradkowski <wgradkowski@gmail.com>
  */
-public class MatFileInputStream extends InputStream
+class MatFileInputStream
 {
     private int type;
-    private InputStream is;
-    private boolean byteSwap;
+    private ByteBuffer buf;
     
     /**
      * Attach MAT-file input stream to <code>InputStream</code>
      * 
      * @param is - input stream
      * @param type - type of data in the stream
-     * @param byteSwap - set to <code>true</code> if data requires swapping for
-     *                   correct interpretation
      * @see com.jmatio.common.MatDataTypes
      */
-    public MatFileInputStream( InputStream is, int type, boolean byteSwap )
+    public MatFileInputStream( ByteBuffer buf, int type )
     {
         this.type = type;
-        this.is = is;
-        this.byteSwap = byteSwap;
+        this.buf = buf;
     }
     
     /**
@@ -43,39 +37,25 @@ public class MatFileInputStream extends InputStream
      */
     public int readInt() throws IOException
     {
-        //read bytes from stream. buffer size is determined by data type
-        byte[] buffer = new byte[ sizeOf() ];
-        is.read(buffer);
-        
-        //swap if necesary
-        if ( byteSwap )
-        {
-            swapBuffer(buffer);
-        }
-        
-        //convert data to double
-        DataInputStream _dis = new DataInputStream(new ByteArrayInputStream(buffer) );
-        
         switch ( type )
         {
             case MatDataTypes.miUINT8:
-                return (int)( _dis.readByte() & 0xFF);
+                return (int)( buf.get() & 0xFF);
             case MatDataTypes.miINT8:
-                return (int)_dis.readByte();
+                return (int) buf.get();
             case MatDataTypes.miUINT16:
-                return (int)( _dis.readShort() & 0xFFFF);
+                return (int)( buf.getShort() & 0xFFFF);
             case MatDataTypes.miINT16:
-                return (int)_dis.readShort();
+                return (int) buf.getShort();
             case MatDataTypes.miUINT32:
-                return (int)( _dis.readInt() & 0xFFFFFFFF);
+                return (int)( buf.getInt() & 0xFFFFFFFF);
             case MatDataTypes.miINT32:
-                return (int)_dis.readInt();
+                return (int) buf.getInt();
             case MatDataTypes.miDOUBLE:
-                return (int)_dis.readDouble();
+                return (int) buf.getDouble();
             default:
-                return (int)_dis.readByte();
+                throw new IllegalArgumentException("Unknown data type: " + type);
         }
-        
     }
     /**
      * Reads data (number of bytes red is determined by <i>data type</i>)
@@ -86,38 +66,27 @@ public class MatFileInputStream extends InputStream
      */
     public char readChar() throws IOException
     {
-        //read bytes from stream. buffer size is determined by data type
-        byte[] buffer = new byte[ sizeOf() ];
-        is.read(buffer);
-        //swap if necesary
-        if ( byteSwap )
-        {
-            swapBuffer(buffer);
-        }
-        
-        //convert data to double
-        DataInputStream _dis = new DataInputStream(new ByteArrayInputStream(buffer) );
-        
         switch ( type )
         {
             case MatDataTypes.miUINT8:
-                return (char)( _dis.readByte() & 0xFF);
+                return (char)( buf.get() & 0xFF);
             case MatDataTypes.miINT8:
-                return (char)_dis.readByte();
+                return (char) buf.get();
             case MatDataTypes.miUINT16:
-                return (char)( _dis.readShort() & 0xFFFF);
+                return (char)( buf.getShort() & 0xFFFF);
             case MatDataTypes.miINT16:
-                return (char)_dis.readShort();
+                return (char) buf.getShort();
             case MatDataTypes.miUINT32:
-                return (char)( _dis.readInt() & 0xFFFFFFFF);
+                return (char)( buf.getInt() & 0xFFFFFFFF);
             case MatDataTypes.miINT32:
-                return (char)_dis.readInt();
+                return (char) buf.getInt();
             case MatDataTypes.miDOUBLE:
-                return (char)_dis.readDouble();
+                return (char) buf.getDouble();
+            case MatDataTypes.miUTF8:
+                return (char) buf.get();
             default:
-                return (char)_dis.readByte();
+                throw new IllegalArgumentException("Unknown data type: " + type);
         }
-        
     }
     /**
      * Reads data (number of bytes red is determined by <i>data type</i>)
@@ -128,78 +97,25 @@ public class MatFileInputStream extends InputStream
      */
     public double readDouble() throws IOException
     {
-        //read bytes from stream. buffer size is determined by data type
-        byte[] buffer = new byte[ sizeOf() ];
-        is.read(buffer);
-        //swap if necesary
-        if ( byteSwap )
-        {
-            swapBuffer(buffer);
-        }
-        
-        //convert data to double
-        DataInputStream _dis = new DataInputStream(new ByteArrayInputStream(buffer) );
-        
         switch ( type )
         {
             case MatDataTypes.miUINT8:
-                return (double)( _dis.readByte() & 0xFF);
+                return (double)( buf.get() & 0xFF);
             case MatDataTypes.miINT8:
-                return (double)_dis.readByte();
+                return (double) buf.get();
             case MatDataTypes.miUINT16:
-                return (double)( _dis.readShort() & 0xFFFF);
+                return (double)( buf.getShort() & 0xFFFF);
             case MatDataTypes.miINT16:
-                return (double)_dis.readShort();
+                return (double) buf.getShort();
             case MatDataTypes.miUINT32:
-                return (double)( _dis.readInt() & 0xFFFFFFFF);
+                return (double)( buf.getInt() & 0xFFFFFFFF);
             case MatDataTypes.miINT32:
-                return (double)_dis.readInt();
+                return (double) buf.getInt();
             case MatDataTypes.miDOUBLE:
-                return _dis.readDouble();
+                return (double) buf.getDouble();
             default:
-                return _dis.readDouble();
+                throw new IllegalArgumentException("Unknown data type: " + type);
         }
-    }
-    /**
-     * Swap byte buffer
-     * 
-     * @param buffer
-     */
-    private void swapBuffer(byte[] buffer)
-    {
-        if ( buffer.length == 1 ) 
-        {
-            return;
-        }
-        if ( buffer.length%2 != 0 )
-        {
-            throw new IllegalArgumentException("Byte array length must by multiplication of 2");
-        }
-        for(int i = 0; i < buffer.length/2; i++)
-        {
-            int src = i;
-            int dest = buffer.length - 1 - i;
-            
-            byte tmp = buffer[dest];
-            buffer[dest] = buffer[src];
-            buffer[src] = tmp;
-        }
-    }
-    /**
-     * Get size of (number of bytes) for data in this stream.
-     * 
-     * @return - size of data for this stream type
-     */
-    private int sizeOf()
-    {
-        return MatDataTypes.sizeOf( type );
-    }
-    
-    @Override
-    public int read() throws IOException
-    {
-        // TODO Auto-generated method stub
-        return 0;
     }
 
 }
