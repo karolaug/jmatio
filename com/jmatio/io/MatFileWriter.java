@@ -6,6 +6,8 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.WritableByteChannel;
 import java.util.Collection;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
@@ -72,7 +74,7 @@ public class MatFileWriter
      */
     public MatFileWriter(File file, Collection<MLArray> data) throws IOException
     {
-        this( new DataOutputStream(new FileOutputStream(file)), data );
+        this( new FileOutputStream(file).getChannel(), data );
     }
     /**
      * Writes MLArrays into <code>OuputSteram</code>.
@@ -83,10 +85,10 @@ public class MatFileWriter
      * @param data - <code>Collection</code> of <code>MLArray</code> elements
      * @throws IOException
      */
-    public MatFileWriter(DataOutputStream output, Collection<MLArray> data) throws IOException
+    public MatFileWriter(WritableByteChannel channel, Collection<MLArray> data) throws IOException
     {
         //write header
-        writeHeader(output);
+        writeHeader(channel);
         
         //write data
         for ( MLArray matrix : data )
@@ -113,13 +115,18 @@ public class MatFileWriter
             }
             while ( toread > 0 );
             
-            //write COMPRESSED tag and compressed data into output stream
-            output.writeInt( MatDataTypes.miCOMPRESSED );
-            output.writeInt(compressed.size());
-            output.write(compressed.toByteArray());
+            //write COMPRESSED tag and compressed data into output channel
+            byte[] compressedBytes = compressed.toByteArray();
+            ByteBuffer buf = ByteBuffer.allocateDirect(2 * 4 /* Int size */ + compressedBytes.length);
+            buf.putInt( MatDataTypes.miCOMPRESSED );
+            buf.putInt(compressedBytes.length);
+            buf.put(compressedBytes);
+            
+            buf.flip();
+            channel.write(buf);
         }
         
-        output.close();        
+        channel.close();        
     }
     
     /**
@@ -127,26 +134,34 @@ public class MatFileWriter
      * @param os <code>OutputStream</code>
      * @throws IOException
      */
-    private void writeHeader(DataOutputStream os) throws IOException
+    private void writeHeader(WritableByteChannel channel) throws IOException
     {
         //write descriptive text
         MatFileHeader header = MatFileHeader.createHeader();
         char[] dest = new char[116];
         char[] src = header.getDescription().toCharArray();
         System.arraycopy(src, 0, dest, 0, src.length);
+        
+        byte[] endianIndicator = header.getEndianIndicator();
+        
+        ByteBuffer buf = ByteBuffer.allocateDirect(dest.length * 2 /* Char size */ + 2 + endianIndicator.length);
+        
         for ( int i = 0; i < dest.length; i++ )
         {
-            os.writeByte( dest[i] );
+            buf.put( (byte)dest[i] );
         }
         //write subsyst data offset
-        os.write( new byte[8] );
+        buf.position( buf.position() + 8);
         
         //write version
         int version = header.getVersion();
-        os.writeByte(version >> 8);
-        os.writeByte(version);
+        buf.put( (byte)(version >> 8) );
+        buf.put( (byte)version );
         
-        os.write( header.getEndianIndicator() );
+        buf.put( endianIndicator );
+        
+        buf.flip();
+        channel.write(buf);
     }
     
     /**
