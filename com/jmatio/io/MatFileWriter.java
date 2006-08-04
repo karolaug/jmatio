@@ -11,6 +11,7 @@ import java.nio.channels.WritableByteChannel;
 import java.util.Collection;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
 
 import com.jmatio.common.MatDataTypes;
 import com.jmatio.types.MLArray;
@@ -101,29 +102,26 @@ public class MatFileWriter
             
             //compress data to save storage
             Deflater compresser = new Deflater();
-            compresser.setInput(baos.toByteArray());
-            compresser.finish();
+            
+            byte[] input = baos.toByteArray();
             
             ByteArrayOutputStream compressed = new ByteArrayOutputStream();
+            DataOutputStream dout = new DataOutputStream(new DeflaterOutputStream(compressed, compresser));
             
-            byte[] buffer = new byte[128];
-            int toread = 0;
-            do
-            {
-                toread = compresser.deflate(buffer);
-                compressed.write(buffer);
-            }
-            while ( toread > 0 );
+            dout.write(input);
+            
+            dout.close();
+            compressed.close();
             
             //write COMPRESSED tag and compressed data into output channel
             byte[] compressedBytes = compressed.toByteArray();
             ByteBuffer buf = ByteBuffer.allocateDirect(2 * 4 /* Int size */ + compressedBytes.length);
             buf.putInt( MatDataTypes.miCOMPRESSED );
-            buf.putInt(compressedBytes.length);
-            buf.put(compressedBytes);
+            buf.putInt( compressedBytes.length );
+            buf.put( compressedBytes );
             
             buf.flip();
-            channel.write(buf);
+            channel.write( buf );
         }
         
         channel.close();        
