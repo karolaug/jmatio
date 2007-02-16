@@ -13,10 +13,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This class represents Matlab's Structure object (struct array).
+ * This class represents Matlab's Structure object (structure array).
  * 
  * Note: array of structures can contain only structures of the same type
- * , that means structues that have the same field names.
+ * , that means structures that have the same field names.
  * 
  * @author Wojciech Gradkowski <wgradkowski@gmail.com>
  */
@@ -31,7 +31,7 @@ public class MLStructure extends MLArray
      */
     private List< Map<String,MLArray> > mlStructArray;
     /**
-     * Current structure pointer for bulk insertation 
+     * Current structure pointer for bulk insert 
      */
     private int currentIndex = 0;
     
@@ -44,7 +44,7 @@ public class MLStructure extends MLArray
     {
         super(name, dims, type, attributes);
         
-        mlStructArray = new ArrayList< Map<String,MLArray> >();
+        mlStructArray = new ArrayList< Map<String,MLArray> >( dims[0]*dims[1] );
         keys = new LinkedHashSet<String>();
     }
     /**
@@ -90,7 +90,7 @@ public class MLStructure extends MLArray
     }
     
     /**
-     * Gets the maximum length of field desctiptor
+     * Gets the maximum length of field descriptor
      * 
      * @return
      */
