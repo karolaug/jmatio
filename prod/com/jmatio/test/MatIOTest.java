@@ -17,6 +17,7 @@ import com.jmatio.io.MatFileWriter;
 import com.jmatio.types.MLArray;
 import com.jmatio.types.MLChar;
 import com.jmatio.types.MLDouble;
+import com.jmatio.types.MLUInt8;
 
 /**
  * The test suite for JMatIO
@@ -124,6 +125,61 @@ public class MatIOTest
     }
     
     /**
+     * Tests <code>MLUint8</code> reading and writing.
+     * 
+     * @throws IOException
+     */
+    @Test public void MLUInt8ArrayTest() throws IOException
+    {
+        //array name
+        String name = "arr";
+        //file name in which array will be storred
+        String fileName = "mluint8tst.mat";
+
+        //test column-packed vector
+        byte[] src = new byte[] { 1, 2, 3, 4, 5, 6 };
+        //test 2D array coresponding to test vector
+        byte[][] src2D = new byte[][] { { 1, 4 },
+                                        { 2, 5 },
+                                        { 3, 6 }
+                                        };
+
+        //create 3x2 double matrix
+        //[ 1.0 4.0 ;
+        //  2.0 5.0 ;
+        //  3.0 6.0 ]
+        MLUInt8 mluint8 = new MLUInt8( name, src, 3 );
+        
+        //write array to file
+        ArrayList<MLArray> list = new ArrayList<MLArray>();
+        list.add( mluint8 );
+        
+        //write arrays to file
+        new MatFileWriter( fileName, list );
+        
+        //read array form file
+        MatFileReader mfr = new MatFileReader( fileName );
+        MLArray mlArrayRetrived = mfr.getMLArray( name );
+        
+        //test if MLArray objects are equal
+        assertEquals("Test if value red from file equals value stored", mluint8, mlArrayRetrived);
+        
+        //test if 2D array match
+        for ( int i = 0; i < src2D.length; i++ )
+        {
+            boolean result = Arrays.equals( src2D[i], ((MLUInt8)mlArrayRetrived ).getArray()[i] );
+            assertEquals( "2D array match", true, result );
+        }
+        
+        //test new constructor
+        MLArray mlMLUInt82D = new MLUInt8(name, src2D );
+        //compare it with original
+        assertEquals( "Test if double[][] constructor produces the same matrix as normal one", mlMLUInt82D, mluint8 );
+    }
+
+    
+    
+    /**
      * Test <code>MatFileFilter</code> options
      */
     @Test public void filterTest()
@@ -177,7 +233,7 @@ public class MatIOTest
         MatFileReader mfr = new MatFileReader( fileName, filter );
         
         //check size of
-        Map content = mfr.getContent();
+        Map<String, MLArray> content = mfr.getContent();
         assertEquals("Test if only one array was red", 1, content.size() );
         
     }

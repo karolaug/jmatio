@@ -51,6 +51,8 @@ class MatFileInputStream
                 return (int)( buf.getInt() & 0xFFFFFFFF);
             case MatDataTypes.miINT32:
                 return (int) buf.getInt();
+            case MatDataTypes.miUINT64:
+                return (int) buf.getLong();
             case MatDataTypes.miDOUBLE:
                 return (int) buf.getDouble();
             default:
@@ -113,6 +115,31 @@ class MatFileInputStream
                 return (double) buf.getInt();
             case MatDataTypes.miDOUBLE:
                 return (double) buf.getDouble();
+            default:
+                throw new IllegalArgumentException("Unknown data type: " + type);
+        }
+    }
+
+    public byte readByte()
+    {
+        switch ( type )
+        {
+            case MatDataTypes.miUINT8:
+                return (byte)( buf.get() & 0xFF);
+            case MatDataTypes.miINT8:
+                return (byte) buf.get();
+            case MatDataTypes.miUINT16:
+                return (byte)( buf.getShort() & 0xFFFF);
+            case MatDataTypes.miINT16:
+                return (byte) buf.getShort();
+            case MatDataTypes.miUINT32:
+                return (byte)( buf.getInt() & 0xFFFFFFFF);
+            case MatDataTypes.miINT32:
+                return (byte) buf.getInt();
+            case MatDataTypes.miDOUBLE:
+                return (byte) buf.getDouble();
+            case MatDataTypes.miUTF8:
+                return (byte) buf.get();
             default:
                 throw new IllegalArgumentException("Unknown data type: " + type);
         }

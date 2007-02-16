@@ -1,19 +1,25 @@
 package com.jmatio.io;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
+
+import javax.management.loading.MLetMBean;
 
 import com.jmatio.common.MatDataTypes;
 import com.jmatio.types.MLArray;
@@ -22,6 +28,7 @@ import com.jmatio.types.MLChar;
 import com.jmatio.types.MLDouble;
 import com.jmatio.types.MLSparse;
 import com.jmatio.types.MLStructure;
+import com.jmatio.types.MLUInt8;
 
 /**
  * MAT-file reader. Reads MAT-file into <code>MLArray</code> objects.
@@ -67,10 +74,10 @@ public class MatFileReader
      * Creates instance of <code>MatFileReader</code> and reads MAT-file 
      * from location given as <code>fileName</code>.
      * 
-     * This method reads MAT-file withiout filtering.
+     * This method reads MAT-file without filtering.
      * 
      * @param fileName the MAT-file path <code>String</code>
-     * @throws IOException when error occured while processing the file.
+     * @throws IOException when error occurred while processing the file.
      */
     public MatFileReader(String fileName) throws FileNotFoundException, IOException
     {
@@ -81,11 +88,11 @@ public class MatFileReader
      * from location given as <code>fileName</code>.
      * 
      * Results are filtered by <code>MatFileFilter</code>. Arrays that do not meet
-     * filter match condition will not be avalable in results.
+     * filter match condition will not be available in results.
      * 
      * @param fileName the MAT-file path <code>String</code>
      * @param MatFileFilter array name filter.
-     * @throws IOException when error occured while processing the file.
+     * @throws IOException when error occurred while processing the file.
      */
     public MatFileReader(String fileName, MatFileFilter filter ) throws IOException
     {
@@ -95,10 +102,10 @@ public class MatFileReader
      * Creates instance of <code>MatFileReader</code> and reads MAT-file 
      * from <code>file</code>. 
      * 
-     * This method reads MAT-file withiout filtering.
+     * This method reads MAT-file without filtering.
      * 
      * @param file the MAT-file
-     * @throws IOException when error occured while processing the file.
+     * @throws IOException when error occurred while processing the file.
      */
     public MatFileReader(File file) throws IOException
     {
@@ -110,11 +117,11 @@ public class MatFileReader
      * from <code>file</code>.
      * 
      * Results are filtered by <code>MatFileFilter</code>. Arrays that do not meet
-     * filter match condition will not be avalable in results.
+     * filter match condition will not be available in results.
      * 
      * @param file the MAT-file
      * @param MatFileFilter array name filter.
-     * @throws IOException when error occured while processing the file.
+     * @throws IOException when error occurred while processing the file.
      */
     public MatFileReader(File file, MatFileFilter filter) throws IOException
     {
@@ -132,7 +139,6 @@ public class MatFileReader
         {
             readData( buf );
         }
-        
         //close file channel
         roChannel.close();
         
@@ -150,7 +156,7 @@ public class MatFileReader
      * Returns list of <code>MLArray</code> objects that were inside MAT-file
      * 
      * @return - a <code>ArrayList</code>
-     * @deprecated use <code>getContent</code> which returs a Map to provide 
+     * @deprecated use <code>getContent</code> which returns a Map to provide 
      *             easier access to <code>MLArray</code>s contained in MAT-file
      */
     public ArrayList<MLArray> getData()
@@ -175,7 +181,7 @@ public class MatFileReader
      * 
      * MLArrays are mapped with MLArrays' names
      *  
-     * @return - a <code>Map</code> of MLArrays mapped with theid names.
+     * @return - a <code>Map</code> of MLArrays mapped with their names.
      */
     public Map<String, MLArray> getContent()
     {
@@ -184,14 +190,14 @@ public class MatFileReader
     /**
      * Decompresses (inflates) bytes from input stream.
      * 
-     * Stream marker is being set at +<code>numOfBytes</code> positon of the
+     * Stream marker is being set at +<code>numOfBytes</code> position of the
      * stream.
      * 
      * @param is -
      *            input byte buffer
      * @param numOfBytes -
      *            number of bytes to be red
-     * @return - new <code>ByteBuffer</code> with infladed block of data
+     * @return - new <code>ByteBuffer</code> with inflated block of data
      * @throws IOException
      *             when error occurs while reading or inflating the buffer .
      */
@@ -220,7 +226,7 @@ public class MatFileReader
         }
         catch ( DataFormatException e )
         {
-            throw new MatlabIOException("Cound not decompress data: " + e );
+            throw new MatlabIOException("Could not decompress data: " + e );
         }
         finally
         {
@@ -277,7 +283,7 @@ public class MatFileReader
                 
                 if ( toread != 0 )
                 {
-                    throw new MatlabIOException("Matrix was not red fully! " + toread + " remainging in the buffer.");
+                    throw new MatlabIOException("Matrix was not red fully! " + toread + " remaining in the buffer.");
                 }
                 break;
             default:
@@ -289,7 +295,7 @@ public class MatFileReader
      * Reads miMATRIX from from input stream.
      * 
      * If reading was not finished (which is normal for filtered results)
-     * returns <cod>null</code>.
+     * returns <code>null</code>.
      * 
      * Modifies <code>buf</code> position to the position when reading
      * finished.
@@ -313,8 +319,8 @@ public class MatFileReader
         
         //read flags
         int[] flags = readFlags(buf);
-        int attributes = flags[0];
-        int nzmax = flags[1];
+        int attributes = ( flags.length != 0 ) ? flags[0] : 0;
+        int nzmax = ( flags.length != 0 ) ? flags[1] : 0;
         int type = attributes & 0xff;
         
         //read Array dimension
@@ -323,7 +329,7 @@ public class MatFileReader
         //read array Name
         String name = readName(buf);
         
-        //if this array is filtered out retur imediately
+        //if this array is filtered out return immediately
         if ( isRoot && !filter.matches(name) )
         {
             return null;
@@ -357,7 +363,6 @@ public class MatFileReader
                     fieldNames[i] = zeroEndByteArrayToString(names);
                 }
                 buf.position( buf.position() + padding );
-                
                 //read fields
                 for ( int index = 0; index < struct.getM()*struct.getN(); index++ )
                 {
@@ -406,6 +411,30 @@ public class MatFileReader
                 }
                 mlArray = mldouble;
                 break;
+            case MLArray.mxUINT8_CLASS:
+                
+                byte[] ab;
+                MLUInt8 mluint8 = new MLUInt8(name, dims, type, attributes);
+                
+                //read real
+                tag = new ISMatTag(buf);
+                ab = tag.readToByteArray();
+                for ( int i = 0; i < ab.length; i++ )
+                {
+                    mluint8.setReal( ab[i], i );
+                }
+                //read complex
+                if ( mluint8.isComplex() )
+                {
+                    tag = new ISMatTag(buf);
+                    ab = tag.readToByteArray();
+                    for ( int i = 0; i < ab.length; i++ )
+                    {
+                        mluint8.setReal( ab[i], i );
+                    }
+                }
+                mlArray = mluint8;
+                break;
             case MLArray.mxCHAR_CLASS:
                 MLChar mlchar = new MLChar(name, dims, type, attributes);
                 
@@ -428,7 +457,7 @@ public class MatFileReader
                 tag = new ISMatTag(buf);
                 int[] jc = tag.readToIntArray();
                 
-                //read pr (reall part)
+                //read pr (real part)
                 tag = new ISMatTag(buf);
                 double[] ad1 = tag.readToDoubleArray();
                 int n = 0;
@@ -460,20 +489,73 @@ public class MatFileReader
                 }
                 mlArray = sparse;
                 break;
+//            case MLArray.mxOPAQUE_CLASS:
+//                //read ir (row indices)
+//                tag = new ISMatTag(buf);
+//                bytes = new byte[tag.size];
+////                //buf.get(bytes);
+//                System.out.println( "Class name: " + new String(tag.readToCharArray()));
+//                System.out.println( "Array name: " + name );
+//                System.out.println( "Array type: " + type);
+//                
+//                byte[] nn = new byte[dims.length];
+//                for ( int i = 0; i < dims.length; i++ )
+//                {
+//                    nn[i] = (byte)dims[i];
+//                }
+//                System.out.println( "Array name: " + new String ( nn ) );
+//                
+//                readData(buf);
+//                
+//                mlArray = null;
+//                break;
+//            case MLArray.mxUINT8_CLASS:
+//                tag = new ISMatTag(buf);
+//                //System.out.println( "Array name: " + name );
+//                System.out.println( "Array type: " + type);
+//                System.out.println( "Array size: " + tag);
+//                System.out.println( "Array flags: " + Arrays.toString(flags));
+//                System.out.println( "Array attributes: " + attributes);
+//                
+//                
+//                char[] chars = tag.readToCharArray();
+//                byte[] bytes = new byte[chars.length];
+//                for ( int i = 0; i < chars.length; i++ )
+//                {
+//                    bytes[i] = (byte)chars[i];
+//                }
+//                try
+//                {
+//                    ObjectInputStream ois = new ObjectInputStream( new ByteArrayInputStream(bytes) );
+//                    System.out.println( ois.readObject() );
+//                }
+//                catch (Exception e)
+//                {
+//                    System.out.println(chars);
+//                    //System.out.println(Arrays.toString(chars));
+//                    // TODO Auto-generated catch block
+//                    //e.printStackTrace();
+//                    
+//                }
+//                mlArray = null;
+//                
+//                
+//                break;
             default:
                 throw new MatlabIOException("Incorrect matlab array class: " + MLArray.typeToString(type) );
                
         }
         return mlArray;
     }
+    byte[] bytes;
     /**
      * Converts byte array to <code>String</code>. 
      * 
      * It assumes that String ends with \0 value.
      * 
      * @param bytes byte array containing the string.
-     * @return String retrived from byte array.
-     * @throws IOException if reading error occured.
+     * @return String retrieved from byte array.
+     * @throws IOException if reading error occurred.
      */
     private String zeroEndByteArrayToString(byte[] bytes) throws IOException
     {
@@ -558,7 +640,7 @@ public class MatFileReader
         int version;
         byte[] endianIndicator = new byte[2];
         
-        //desctiptive text 116 bytes
+        //descriptive text 116 bytes
         byte[] descriptionBuffer = new byte[116];
         buf.get(descriptionBuffer);
         
@@ -573,7 +655,7 @@ public class MatFileReader
         buf.position( buf.position() + 8);
         
         byte[] bversion = new byte[2];
-        //vesion 2 bytes
+        //version 2 bytes
         buf.get(bversion);
         
         //endian indicator 2 bytes
@@ -630,6 +712,26 @@ public class MatFileReader
                 compressed = true;
             }
             padding = getPadding(size, compressed);
+        }
+        public byte[] readToByteArray()
+        {
+            //allocate memory for array elements
+            int elements = size/sizeOf();
+            byte[] ab = new byte[elements];
+            
+            MatFileInputStream mfis = new MatFileInputStream( buf, type );
+
+            for ( int i = 0; i < elements; i++ )
+            {
+                ab[i] = mfis.readByte();
+            }
+            
+            //skip padding
+            if ( padding > 0 )
+            {
+                buf.position( buf.position() + padding );
+            }
+            return ab;
         }
         public double[] readToDoubleArray() throws IOException
         {

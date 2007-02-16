@@ -20,6 +20,7 @@ import com.jmatio.types.MLChar;
 import com.jmatio.types.MLDouble;
 import com.jmatio.types.MLSparse;
 import com.jmatio.types.MLStructure;
+import com.jmatio.types.MLUInt8;
 
 /**
  * MAT-file writer.
@@ -226,6 +227,34 @@ public class MatFileWriter
                         bufferDOS.writeDouble( ad[i].doubleValue() );
                     }
                     tag = new OSArrayTag(MatDataTypes.miDOUBLE, buffer.toByteArray() );
+                    tag.writeTo( dos );
+                }
+                break;
+            case MLArray.mxUINT8_CLASS:
+                Byte[] ab;                
+                
+                //write real data
+                buffer = new ByteArrayOutputStream();
+                bufferDOS = new DataOutputStream(buffer);
+                ab = ((MLUInt8)array).exportReal();
+                for ( int i = 0; i < ab.length; i++ )
+                {
+                    bufferDOS.writeByte( ab[i].byteValue() );
+                }
+                tag = new OSArrayTag(MatDataTypes.miUINT8, buffer.toByteArray() );
+                tag.writeTo( dos );
+                
+                //write real imaginary
+                if ( array.isComplex() )
+                {
+                    buffer = new ByteArrayOutputStream();
+                    bufferDOS = new DataOutputStream(buffer);
+                    ab = ((MLUInt8)array).exportImaginary();
+                    for ( int i = 0; i < ab.length; i++ )
+                    {
+                        bufferDOS.writeByte( ab[i].byteValue() );
+                    }
+                    tag = new OSArrayTag(MatDataTypes.miUINT8, buffer.toByteArray() );
                     tag.writeTo( dos );
                 }
                 break;
