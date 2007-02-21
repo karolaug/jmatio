@@ -1,5 +1,6 @@
 package com.jmatio.types;
 
+import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -111,6 +112,15 @@ public class MLSparse extends MLNumericArray<Double>
         }
         return new Double(0);
     }
+    
+    /* (non-Javadoc)
+     * @see com.jmatio.types.MLNumericArray#getReal(int)
+     */
+    public Double getReal ( int index )
+    {
+        throw new IllegalArgumentException("Can't get Sparse array elements by index. " +
+        "Please use getReal(int index) instead.");
+    }
     /**
      * @param value
      * @param m
@@ -162,6 +172,14 @@ public class MLSparse extends MLNumericArray<Double>
             return imaginary.get(i);
         }
         return new Double(0);
+    }
+    /* (non-Javadoc)
+     * @see com.jmatio.types.MLNumericArray#getImaginary(int)
+     */
+    public Double getImaginary( int index )
+    {
+        throw new IllegalArgumentException("Can't get Sparse array elements by index. " +
+        "Please use getImaginary(int index) instead.");
     }
     /* (non-Javadoc)
      * @see com.paradigmdesigner.matlab.types.MLNumericArray#exportReal()
@@ -264,5 +282,30 @@ public class MLSparse extends MLNumericArray<Double>
             return sb.toString();
         }
     }
+
+    public int getBytesAllocated()
+    {
+        return Double.SIZE << 3;
+    }
+    public Double buldFromBytes(byte[] bytes)
+    {
+        if ( bytes.length != getBytesAllocated() )
+        {
+            throw new IllegalArgumentException( 
+                        "To build from byte array I need array of size: " 
+                                + getBytesAllocated() );
+        }
+        return ByteBuffer.wrap( bytes ).getDouble();
+        
+    }
+    public byte[] getByteArray(Double value)
+    {
+        int byteAllocated = getBytesAllocated();
+        ByteBuffer buff = ByteBuffer.allocate( byteAllocated );
+        buff.putDouble( value );
+        return buff.array();
+    }
+    
+    
 
 }

@@ -1,5 +1,6 @@
 package com.jmatio.types;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
@@ -16,8 +17,8 @@ import java.util.Arrays;
  */
 public abstract class MLNumericArray<T extends Number> extends MLArray implements GenericArrayCreator<T>
 {
-    private T[] real;
-    private T[] imaginary;
+    private ByteBuffer real;
+    private ByteBuffer imaginary;
     
     /**
      * Normally this constructor is used only by MatFileReader and MatFileWriter
@@ -31,8 +32,11 @@ public abstract class MLNumericArray<T extends Number> extends MLArray implement
     {
         super(name, dims, type, attributes);
         
-        real = createArray(getM(), getN());
-        imaginary = createArray(getM(), getN());
+        real = ByteBuffer.allocateDirect( getSize()*getBytesAllocated());
+        if ( isComplex() )
+        {
+            imaginary = ByteBuffer.allocateDirect( getSize()*getBytesAllocated());
+        }
     }
     /**
      * <a href="http://math.nist.gov/javanumerics/jama/">Jama</a> [math.nist.gov] style: 
@@ -61,8 +65,18 @@ public abstract class MLNumericArray<T extends Number> extends MLArray implement
      */
     public T getReal(int m, int n)
     {
-        return real[getIndex(m,n)];
+        return getReal( getIndex(m,n) );
     }
+    
+    /**
+     * @param index
+     * @return
+     */
+    public T getReal( int index )
+    {
+        return _get(real, index);
+    }
+    
     /**
      * Sets single real array element.
      * 
@@ -72,7 +86,7 @@ public abstract class MLNumericArray<T extends Number> extends MLArray implement
      */
     public void setReal(T value, int m, int n)
     {
-        real[getIndex(m,n)] = value;
+        setReal( value, getIndex(m,n) );
     }
     /**
      * Sets single real array element.
@@ -82,7 +96,7 @@ public abstract class MLNumericArray<T extends Number> extends MLArray implement
      */
     public void setReal(T value, int index)
     {
-        real[index] = value;
+        _set( real, value, index );
     }
     /**
      * Sets real part of matrix
@@ -106,7 +120,7 @@ public abstract class MLNumericArray<T extends Number> extends MLArray implement
      */
     public void setImaginary(T value, int m, int n)
     {
-        imaginary[getIndex(m,n)] = value;
+        setImaginary( value, getIndex(m,n) );
     }
     /**
      * Sets single real array element.
@@ -116,7 +130,10 @@ public abstract class MLNumericArray<T extends Number> extends MLArray implement
      */
     public void setImaginary(T value, int index)
     {
-        imaginary[index] = value;
+        if ( isComplex() )
+        {
+            _set(imaginary, value, index);
+        }
     }
     /**
      * Gets single imaginary array element of A(m,n).
@@ -127,26 +144,35 @@ public abstract class MLNumericArray<T extends Number> extends MLArray implement
      */
     public T getImaginary(int m, int n)
     {
-        return imaginary[getIndex(m,n)];
+        return getImaginary( getIndex(m, n) );
     }
+    /**
+     * @param index
+     * @return
+     */
+    public T getImaginary( int index )
+    {
+        return _get( imaginary, index );
+    }
+    
     /**
      * Exports column-packed vector of real elements
      * 
      * @return - column-packed vector of real elements
      */
-    public T[] exportReal()
-    {
-        return real.clone();
-    }
+//    public T[] exportReal()
+//    {
+//        return real.clone();
+//    }
     /**
      * Exports column-packed vector of imaginary elements
      * 
      * @return - column-packed vector of imaginary elements
      */
-    public T[] exportImaginary()
-    {
-        return imaginary.clone();
-    }
+//    public T[] exportImaginary()
+//    {
+//        return imaginary.clone();
+//    }
     /**
      * Does the same as <code>setReal</code>.
      * 
@@ -201,7 +227,7 @@ public abstract class MLNumericArray<T extends Number> extends MLArray implement
         {
             throw new IllegalStateException("Cannot use this method for Complex matrices");
         }
-        return real[index];
+        return _get( real, index );
     }
     /**
      * @param vector
@@ -214,6 +240,25 @@ public abstract class MLNumericArray<T extends Number> extends MLArray implement
         }
         setReal(vector);
     }
+    private int getByteOffset( int index )
+    {
+        return index*getBytesAllocated();
+    }
+    
+    private T _get( ByteBuffer buffer, int index )
+    {
+        byte[] bytes = new byte[ getBytesAllocated() ];
+        buffer.position( getByteOffset(index) );
+        buffer.get( bytes );
+        return buldFromBytes( bytes );
+    }
+    
+    private void _set( ByteBuffer buffer, T value, int index )
+    {
+        buffer.position( getByteOffset(index) );
+        buffer.put( getByteArray( value ) );
+    }
+    
     /* (non-Javadoc)
      * @see com.jmatio.types.MLArray#contentToString()
      */
@@ -251,12 +296,58 @@ public abstract class MLNumericArray<T extends Number> extends MLArray implement
     {
         if ( o instanceof  MLNumericArray )
         {
-            return Arrays.equals( real, ((MLNumericArray)o).real )
-                    && Arrays.equals( imaginary, ((MLNumericArray)o).imaginary )
-                    && Arrays.equals( dims, ((MLNumericArray)o).dims )
-                    ;
+            boolean result = directByteBufferEquals(real, ((MLNumericArray)o).real )
+                                   && Arrays.equals( dims, ((MLNumericArray)o).dims );
+            if ( isComplex() && result )
+            {
+                result &= directByteBufferEquals(imaginary, ((MLNumericArray)o).imaginary );
+            }
+            return result;
         }
         return super.equals( o );
     }
+    
+    /**
+     * Equals implementation for direct <code>ByteBuffer</code>
+     * 
+     * @param buffa the source buffer to be compared
+     * @param buffb the destination buffer to be compared
+     * @return <code>true</code> if buffers are equal in terms of content
+     */
+    private static boolean directByteBufferEquals(ByteBuffer buffa, ByteBuffer buffb)
+    {
+        if ( buffa == buffb )
+        {
+            return true;
+        }
+        
+        if ( buffa ==null || buffb == null )
+        {
+            return false;
+        }
+        
+        buffa.rewind();
+        buffb.rewind();
+        
+        int length = buffa.remaining();
+        
+        if ( buffb.remaining() != length )
+        {
+            return false;
+        }
+        
+        for ( int i = 0; i < length; i++ )
+        {
+            if ( buffa.get() != buffb.get() )
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    
+    
+    
     
 }

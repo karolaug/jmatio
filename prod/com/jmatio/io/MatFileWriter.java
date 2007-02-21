@@ -203,16 +203,15 @@ public class MatFileWriter
                 
                 break;
             case MLArray.mxDOUBLE_CLASS:
-                Double[] ad;                
-                
                 //write real data
                 buffer = new ByteArrayOutputStream();
                 bufferDOS = new DataOutputStream(buffer);
-                ad = ((MLDouble)array).exportReal();
-                for ( int i = 0; i < ad.length; i++ )
+                
+                for ( int i = 0; i < ((MLDouble)array).getSize(); i++ )
                 {
-                    bufferDOS.writeDouble( ad[i].doubleValue() );
+                    bufferDOS.writeDouble( ((MLDouble)array).getReal(i) );
                 }
+                
                 tag = new OSArrayTag(MatDataTypes.miDOUBLE, buffer.toByteArray() );
                 tag.writeTo( dos );
                 
@@ -221,25 +220,21 @@ public class MatFileWriter
                 {
                     buffer = new ByteArrayOutputStream();
                     bufferDOS = new DataOutputStream(buffer);
-                    ad = ((MLDouble)array).exportImaginary();
-                    for ( int i = 0; i < ad.length; i++ )
+                    for ( int i = 0; i < ((MLDouble)array).getSize(); i++ )
                     {
-                        bufferDOS.writeDouble( ad[i].doubleValue() );
+                        bufferDOS.writeDouble( ((MLDouble)array).getImaginary(i) );
                     }
                     tag = new OSArrayTag(MatDataTypes.miDOUBLE, buffer.toByteArray() );
                     tag.writeTo( dos );
                 }
                 break;
             case MLArray.mxUINT8_CLASS:
-                Byte[] ab;                
-                
                 //write real data
                 buffer = new ByteArrayOutputStream();
                 bufferDOS = new DataOutputStream(buffer);
-                ab = ((MLUInt8)array).exportReal();
-                for ( int i = 0; i < ab.length; i++ )
+                for ( int i = 0; i < ((MLUInt8)array).getSize(); i++ )
                 {
-                    bufferDOS.writeByte( ab[i].byteValue() );
+                    bufferDOS.writeByte( ((MLUInt8)array).getReal(i) );
                 }
                 tag = new OSArrayTag(MatDataTypes.miUINT8, buffer.toByteArray() );
                 tag.writeTo( dos );
@@ -249,10 +244,9 @@ public class MatFileWriter
                 {
                     buffer = new ByteArrayOutputStream();
                     bufferDOS = new DataOutputStream(buffer);
-                    ab = ((MLUInt8)array).exportImaginary();
-                    for ( int i = 0; i < ab.length; i++ )
+                    for ( int i = 0; i < ((MLUInt8)array).getSize(); i++ )
                     {
-                        bufferDOS.writeByte( ab[i].byteValue() );
+                        bufferDOS.writeByte( ((MLUInt8)array).getImaginary(i) );
                     }
                     tag = new OSArrayTag(MatDataTypes.miUINT8, buffer.toByteArray() );
                     tag.writeTo( dos );
@@ -304,11 +298,14 @@ public class MatFileWriter
                 //write real
                 buffer = new ByteArrayOutputStream();
                 bufferDOS = new DataOutputStream(buffer);
-                ad = ((MLSparse)array).exportReal();
+                
+                Double[] ad = ((MLSparse)array).exportReal();
+                
                 for ( int i = 0; i < ad.length; i++ )
                 {
                     bufferDOS.writeDouble( ad[i].doubleValue() );
                 }
+                
                 tag = new OSArrayTag(MatDataTypes.miDOUBLE, buffer.toByteArray() );
                 tag.writeTo( dos );
                 //write real imaginary

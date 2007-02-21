@@ -1,5 +1,7 @@
 package com.jmatio.types;
 
+import java.nio.ByteBuffer;
+
 /**
  * Class represents UInt8 (byte) array (matrix)
  * 
@@ -127,5 +129,23 @@ public class MLUInt8 extends MLNumericArray<Byte>
             }
         }
         return d;
+    }
+    public Byte buldFromBytes(byte[] bytes)
+    {
+        if ( bytes.length != getBytesAllocated() )
+        {
+            throw new IllegalArgumentException( 
+                        "To build from byte array I need array of size: " 
+                                + getBytesAllocated() );
+        }
+        return bytes[0];
+    }
+    public byte[] getByteArray(Byte value)
+    {
+        return new byte[] { value };
+    }
+    public int getBytesAllocated()
+    {
+        return 1;
     }
 }

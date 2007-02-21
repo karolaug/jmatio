@@ -91,5 +91,21 @@ public class MLChar extends MLArray implements GenericArrayCreator<Character>
         return sb.toString();
         
     }
+    public Character buldFromBytes(byte[] bytes)
+    {
+        if ( bytes.length != getBytesAllocated() )
+        {
+            throw new IllegalArgumentException( "To build from byte array I need array of size: " + getBytesAllocated() );
+        }
+        return new Character( (char)bytes[0] );
+    }
+    public byte[] getByteArray(Character value)
+    {
+        return new byte[] { (byte)value.charValue() };
+    }
+    public int getBytesAllocated()
+    {
+        return 1;
+    }
 
 }

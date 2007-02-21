@@ -1,5 +1,7 @@
 package com.jmatio.types;
 
+import java.nio.ByteBuffer;
+
 /**
  * Class represents Double array (matrix)
  * 
@@ -127,5 +129,27 @@ public class MLDouble extends MLNumericArray<Double>
             }
         }
         return d;
+    }
+    public int getBytesAllocated()
+    {
+        return Double.SIZE << 3;
+    }
+    public Double buldFromBytes(byte[] bytes)
+    {
+        if ( bytes.length != getBytesAllocated() )
+        {
+            throw new IllegalArgumentException( 
+                        "To build from byte array I need array of size: " 
+                                + getBytesAllocated() );
+        }
+        return ByteBuffer.wrap( bytes ).getDouble();
+        
+    }
+    public byte[] getByteArray(Double value)
+    {
+        int byteAllocated = getBytesAllocated();
+        ByteBuffer buff = ByteBuffer.allocate( byteAllocated );
+        buff.putDouble( value );
+        return buff.array();
     }
 }
