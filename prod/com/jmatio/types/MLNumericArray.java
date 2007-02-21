@@ -15,7 +15,9 @@ import java.util.Arrays;
  *
  * @param <T>
  */
-public abstract class MLNumericArray<T extends Number> extends MLArray implements GenericArrayCreator<T>
+public abstract class MLNumericArray<T extends Number> extends MLArray 
+                                                       implements GenericArrayCreator<T>,
+                                                                  ByteStorageSupport<T>
 {
     private ByteBuffer real;
     private ByteBuffer imaginary;
@@ -259,6 +261,32 @@ public abstract class MLNumericArray<T extends Number> extends MLArray implement
         buffer.put( getByteArray( value ) );
     }
     
+    public void putImaginaryByteBuffer( ByteBuffer buff )
+    {
+        if ( !isComplex() )
+        {
+            throw new RuntimeException("Array is not complex");
+        }
+        imaginary.rewind();
+        imaginary.put( buff );
+    }
+    
+    public ByteBuffer getImaginaryByteBuffer()
+    {
+        return imaginary;
+    }
+    
+    public void putRealByteBuffer( ByteBuffer buff )
+    {
+        real.rewind();
+        real.put( buff );
+    }
+    
+    public ByteBuffer getRealByteBuffer()
+    {
+        return real;
+    }
+    
     /* (non-Javadoc)
      * @see com.jmatio.types.MLArray#contentToString()
      */
@@ -346,8 +374,6 @@ public abstract class MLNumericArray<T extends Number> extends MLArray implement
 
         return true;
     }
-    
-    
     
     
 }

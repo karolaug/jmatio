@@ -146,6 +146,12 @@ public class MLUInt8 extends MLNumericArray<Byte>
     }
     public int getBytesAllocated()
     {
-        return 1;
+        return Byte.SIZE >> 3;
     }
+    
+    public Class getStorageClazz()
+    {
+        return Byte.class;
+    }
+
 }

@@ -2,8 +2,15 @@ package com.jmatio.io;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.BitSet;
+
+import sun.reflect.Reflection;
 
 import com.jmatio.common.MatDataTypes;
+import com.jmatio.types.ByteStorageSupport;
+import com.jmatio.types.MLArray;
+import com.jmatio.types.MLNumericArray;
 
 /**
  * MAT-file input stream class. 
@@ -144,5 +151,55 @@ class MatFileInputStream
                 throw new IllegalArgumentException("Unknown data type: " + type);
         }
     }
+
+    public ByteBuffer readToByteBuffer(ByteBuffer dest, int elements, ByteStorageSupport storage) throws IOException
+    {
+        
+        int bytesAllocated = storage.getBytesAllocated();
+        int size = elements * storage.getBytesAllocated();
+        
+        if ( MatDataTypes.sizeOf(type) == bytesAllocated )
+        {
+            int bufMaxSize = 1024;
+            int bufSize = buf.remaining() < bufMaxSize ? buf.remaining() : bufMaxSize;
+            int bufPos = buf.position();
+            
+            byte[] tmp = new byte[ bufSize ];
+            
+            while ( dest.remaining() > 0 )
+            {
+                int length = dest.remaining() > tmp.length ? tmp.length : dest.remaining();
+                buf.get( tmp, 0, length );
+                dest.put( tmp, 0, length );
+            }
+            buf.position( bufPos + size );
+        }
+        else
+        {
+            Class clazz = storage.getStorageClazz();
+            while ( dest.remaining() > 0 )
+            {
+                if ( clazz.equals( Double.class) )
+                {
+                    dest.putDouble( readDouble() );
+                    continue;
+                }
+                if ( clazz.equals( Byte.class) )
+                {
+                    dest.put( readByte() );
+                    continue;
+                }
+                if ( clazz.equals( Integer.class) )
+                {
+                    dest.putInt( readInt() );
+                    continue;
+                }
+                throw new RuntimeException("Not supported buffer reader for " + clazz );
+            }
+        }
+        dest.rewind();
+        return dest;
+    }
+    
 
 }

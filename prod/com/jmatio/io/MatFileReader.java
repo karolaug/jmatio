@@ -1,31 +1,27 @@
 package com.jmatio.io;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
-import javax.management.loading.MLetMBean;
-
 import com.jmatio.common.MatDataTypes;
+import com.jmatio.types.ByteStorageSupport;
 import com.jmatio.types.MLArray;
 import com.jmatio.types.MLCell;
 import com.jmatio.types.MLChar;
 import com.jmatio.types.MLDouble;
+import com.jmatio.types.MLNumericArray;
 import com.jmatio.types.MLSparse;
 import com.jmatio.types.MLStructure;
 import com.jmatio.types.MLUInt8;
@@ -388,52 +384,32 @@ public class MatFileReader
                 mlArray = cell;
                 break;
             case MLArray.mxDOUBLE_CLASS:
-                
-                double[] ad;
-                MLDouble mldouble = new MLDouble(name, dims, type, attributes);
-                
+                mlArray = new MLDouble(name, dims, type, attributes);
                 //read real
                 tag = new ISMatTag(buf);
-                ad = tag.readToDoubleArray();
-                for ( int i = 0; i < ad.length; i++ )
-                {
-                    mldouble.setReal( ad[i], i );
-                }
+                tag.readToByteBuffer( ((MLNumericArray) mlArray).getRealByteBuffer(),
+                                            (MLNumericArray) mlArray );
                 //read complex
-                if ( mldouble.isComplex() )
+                if ( mlArray.isComplex() )
                 {
                     tag = new ISMatTag(buf);
-                    ad = tag.readToDoubleArray();
-                    for ( int i = 0; i < ad.length; i++ )
-                    {
-                        mldouble.setReal( ad[i], i );
-                    }
+                    tag.readToByteBuffer( ((MLNumericArray) mlArray).getImaginaryByteBuffer(),
+                            (MLNumericArray) mlArray );
                 }
-                mlArray = mldouble;
                 break;
             case MLArray.mxUINT8_CLASS:
-                
-                byte[] ab;
-                MLUInt8 mluint8 = new MLUInt8(name, dims, type, attributes);
-                
+                mlArray = new MLUInt8(name, dims, type, attributes);
                 //read real
                 tag = new ISMatTag(buf);
-                ab = tag.readToByteArray();
-                for ( int i = 0; i < ab.length; i++ )
-                {
-                    mluint8.setReal( ab[i], i );
-                }
+                tag.readToByteBuffer( ((MLNumericArray) mlArray).getRealByteBuffer(),
+                                            (MLNumericArray) mlArray );
                 //read complex
-                if ( mluint8.isComplex() )
+                if ( mlArray.isComplex() )
                 {
                     tag = new ISMatTag(buf);
-                    ab = tag.readToByteArray();
-                    for ( int i = 0; i < ab.length; i++ )
-                    {
-                        mluint8.setReal( ab[i], i );
-                    }
+                    tag.readToByteBuffer( ((MLNumericArray) mlArray).getImaginaryByteBuffer(),
+                            (MLNumericArray) mlArray );
                 }
-                mlArray = mluint8;
                 break;
             case MLArray.mxCHAR_CLASS:
                 MLChar mlchar = new MLChar(name, dims, type, attributes);
@@ -712,8 +688,19 @@ public class MatFileReader
                 compressed = true;
             }
             padding = getPadding(size, compressed);
+        } 
+        public void readToByteBuffer( ByteBuffer buff, ByteStorageSupport storage ) throws IOException
+        {
+            MatFileInputStream mfis = new MatFileInputStream( buf, type );
+            int elements = size/sizeOf();
+            mfis.readToByteBuffer( buff, elements, storage );
+            //skip padding
+            if ( padding > 0 )
+            {
+                buf.position( buf.position() + padding );
+            }
         }
-        public byte[] readToByteArray()
+        public byte[] readToByteArray() throws IOException
         {
             //allocate memory for array elements
             int elements = size/sizeOf();

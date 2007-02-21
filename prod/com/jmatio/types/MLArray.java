@@ -2,8 +2,6 @@ package com.jmatio.types;
 
 public class MLArray
 {
-    public static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger( MLArray.class.getName() );
-
     
     /* Matlab Array Types (Classes) */
     public static final int mxUNKNOWN_CLASS = 0;

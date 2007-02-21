@@ -18,6 +18,7 @@ import com.jmatio.types.MLArray;
 import com.jmatio.types.MLCell;
 import com.jmatio.types.MLChar;
 import com.jmatio.types.MLDouble;
+import com.jmatio.types.MLNumericArray;
 import com.jmatio.types.MLSparse;
 import com.jmatio.types.MLStructure;
 import com.jmatio.types.MLUInt8;
@@ -203,52 +204,30 @@ public class MatFileWriter
                 
                 break;
             case MLArray.mxDOUBLE_CLASS:
-                //write real data
-                buffer = new ByteArrayOutputStream();
-                bufferDOS = new DataOutputStream(buffer);
                 
-                for ( int i = 0; i < ((MLDouble)array).getSize(); i++ )
-                {
-                    bufferDOS.writeDouble( ((MLDouble)array).getReal(i) );
-                }
-                
-                tag = new OSArrayTag(MatDataTypes.miDOUBLE, buffer.toByteArray() );
+                tag = new OSArrayTag(MatDataTypes.miDOUBLE, 
+                                ((MLNumericArray)array).getRealByteBuffer() );
                 tag.writeTo( dos );
                 
                 //write real imaginary
                 if ( array.isComplex() )
                 {
-                    buffer = new ByteArrayOutputStream();
-                    bufferDOS = new DataOutputStream(buffer);
-                    for ( int i = 0; i < ((MLDouble)array).getSize(); i++ )
-                    {
-                        bufferDOS.writeDouble( ((MLDouble)array).getImaginary(i) );
-                    }
-                    tag = new OSArrayTag(MatDataTypes.miDOUBLE, buffer.toByteArray() );
+                    tag = new OSArrayTag(MatDataTypes.miDOUBLE, 
+                            ((MLNumericArray)array).getImaginaryByteBuffer() );
                     tag.writeTo( dos );
                 }
                 break;
             case MLArray.mxUINT8_CLASS:
-                //write real data
-                buffer = new ByteArrayOutputStream();
-                bufferDOS = new DataOutputStream(buffer);
-                for ( int i = 0; i < ((MLUInt8)array).getSize(); i++ )
-                {
-                    bufferDOS.writeByte( ((MLUInt8)array).getReal(i) );
-                }
-                tag = new OSArrayTag(MatDataTypes.miUINT8, buffer.toByteArray() );
+                
+                tag = new OSArrayTag(MatDataTypes.miUINT8, 
+                        ((MLNumericArray)array).getRealByteBuffer() );
                 tag.writeTo( dos );
                 
                 //write real imaginary
                 if ( array.isComplex() )
                 {
-                    buffer = new ByteArrayOutputStream();
-                    bufferDOS = new DataOutputStream(buffer);
-                    for ( int i = 0; i < ((MLUInt8)array).getSize(); i++ )
-                    {
-                        bufferDOS.writeByte( ((MLUInt8)array).getImaginary(i) );
-                    }
-                    tag = new OSArrayTag(MatDataTypes.miUINT8, buffer.toByteArray() );
+                    tag = new OSArrayTag(MatDataTypes.miUINT8, 
+                            ((MLNumericArray)array).getImaginaryByteBuffer() );
                     tag.writeTo( dos );
                 }
                 break;
@@ -409,7 +388,7 @@ public class MatFileWriter
      */
     private class OSArrayTag extends MatTag
     {
-        private byte[] data;
+        private ByteBuffer data;
         private int padding;
         /**
          * Creates TAG and stets its <code>size</code> as size of byte array
@@ -419,11 +398,23 @@ public class MatFileWriter
          */
         public OSArrayTag(int type, byte[] data )
         {
-            super( type, data.length );
-            this.data = data;
-            this.padding = getPadding(data.length, false);
-            
+            this ( type, ByteBuffer.wrap( data ) );
         }
+        /**
+         * Creates TAG and stets its <code>size</code> as size of byte array
+         * 
+         * @param type
+         * @param data
+         */
+        public OSArrayTag(int type, ByteBuffer data )
+        {
+            super( type, data.limit() );
+            this.data = data;
+            data.rewind();
+            this.padding = getPadding(data.limit(), false);
+        }
+
+        
         /**
          * Writes tag and data to <code>DataOutputStream</code>. Wites padding if neccesary.
          * 
@@ -435,8 +426,16 @@ public class MatFileWriter
             os.writeInt(type);
             os.writeInt(size);
             
-            os.write(data);
-
+            int maxBuffSize = 1024;
+            int writeBuffSize = data.remaining() < maxBuffSize ? data.remaining() : maxBuffSize;
+            byte[] tmp = new byte[writeBuffSize]; 
+            while ( data.remaining() > 0 )
+            {
+                int length = data.remaining() > tmp.length ? tmp.length : data.remaining();
+                data.get( tmp, 0, length);
+                os.write(tmp, 0, length);
+            }
+            
             if ( padding > 0 )
             {
                 os.write( new byte[padding] );

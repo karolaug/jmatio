@@ -129,7 +129,7 @@ public class MLStructure extends MLArray
         }
         catch  (IOException e)
         {
-            logger.error("Could not write Structure key set to byte array: " + e );
+            System.err.println("Could not write Structure key set to byte array: " + e );
             return new byte[0];
         }
         return baos.toByteArray();
