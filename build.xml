@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+<!-- ====================================================================== 
+     JMatIO
+     The Matlab MAT-file IO API in Java
+                   
+     wgradkowski                                                                
+     ====================================================================== -->
+<project name="JMatIO" default="package">
+	<description>
+		The Matlab MAT-file IO API in Java
+    </description>
+
+	<!-- ================================= 
+          target: init              
+         ================================= -->
+	<target name="init" description="--> initialization">
+		
+		<property name="name" value="jamtio"/>
+		
+		<property name="dev.dir" location="${basedir}"/>
+		<property name="dev.src" location="${dev.dir}\prod"/>
+		<property name="dev.extern" location="${dev.dir}\extern"/>
+		<property name="dev.native" location="${dev.dir}\native"/>
+
+		<property name="build.dir" location="C:\work\build\sitemap"/>
+		<property name="build.src" location="${build.dir}\src"/>
+		<property name="build.bin" location="${build.dir}\bin"/>
+		<property name="build.extern" location="${build.dir}\extern"/>
+		<property name="build.native" location="${build.dir}\native"/>
+		<property name="build.package" location="${build.dir}\lib"/>
+		<property name="build.exec" location="${build.dir}\exec"/>
+		
+	</target>
+
+	<!-- ================================= 
+          target: prepare-src              
+         ================================= -->
+	<target name="prepare-src" depends="init" description="--> Copies source folder">
+		<mkdir dir="${build.src}"/>
+		<copy todir="${build.src}">
+			<fileset dir="${dev.src}">
+				<include name="**/*.java"/>
+			</fileset>
+		</copy>
+	</target>
+
+	<!-- ================================= 
+          target: compile              
+         ================================= -->
+	<target name="compile" depends="prepare-src" description="--> Compiles source folder">
+		<mkdir dir="${build.bin}"/>
+		<javac srcdir="${build.src}" 
+			   destdir="${build.bin}" 
+			   classpath="" 
+			   debug="no"
+			   optimize="yes"
+			   target="1.5"
+		/>
+	</target>
+
+	<!-- ================================= 
+          target: package              
+         ================================= -->
+    <target name="package" depends="compile" description="--> Creates a .jar package">
+		
+        <mkdir dir="${build.bin}/META-INF"/>
+    	<manifest file="${build.bin}/META-INF/MANIFEST.MF">
+            <attribute name="Built-By" value="${user.name}"/>
+        </manifest>
+    	
+    	
+    	<mkdir dir="${build.package}"/>
+        <jar destfile="${build.package}\${name}.jar" 
+        	excludes="META-INF/MANIFEST.MF"
+        	manifest="${build.bin}/META-INF/MANIFEST.MF"
+        	basedir="${build.bin}"
+        />
+    </target>
+		
+	<!-- ================================= 
+          target: clean              
+         ================================= -->
+    <target name="clean" depends="init" description="--> Performs clean">
+    	<delete includeEmptyDirs="true" quiet="true">
+        	<fileset dir="${build.bin}"/>
+	    	<fileset dir="${build.extern}"/>
+    		<fileset dir="${build.native}"/>
+    		<fileset dir="${build.package}"/>
+    		<fileset dir="${build.exec}"/>
+    	</delete>
+    </target>
+
+
+</project>
