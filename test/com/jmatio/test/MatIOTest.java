@@ -99,7 +99,7 @@ public class MatIOTest
     @Test public void testCellFromMatlabCreatedFile() throws IOException
     {
         //array name
-        File file = new File("cell.mat");
+        File file = new File("test/cell.mat");
         MatFileReader reader = new MatFileReader( file );
         MLArray mlArray = reader.getMLArray( "cel" );
         
@@ -415,12 +415,12 @@ public class MatIOTest
      * 
      * @throws Exception
      */
-    @Test public void testReadingMLDoubleCreatedByMatlab() throws Exception
+    @Test public void testDoubleFromMatlabCreatedFile() throws Exception
     {
         //array name
         String name = "arr";
         //file name in which array will be storred
-        String fileName = "matnativedouble.mat";
+        String fileName = "test/matnativedouble.mat";
 
         //test column-packed vector
         double[] src = new double[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
@@ -438,7 +438,7 @@ public class MatIOTest
     @Test public void testSparseFromMatlabCreatedFile() throws IOException
     {
         //array name
-        File file = new File("sparse.mat");
+        File file = new File("test/sparse.mat");
         MatFileReader reader = new MatFileReader( file );
         MLArray mlArray = reader.getMLArray( "spa" );
         
@@ -456,7 +456,7 @@ public class MatIOTest
     @Test public void testStructureFromMatlabCreatedFile() throws IOException
     {
         //array name
-        File file = new File("simplestruct.mat");
+        File file = new File("test/simplestruct.mat");
         MatFileReader reader = new MatFileReader( file );
         MLArray mlArray = reader.getMLArray( "structure" );
         
