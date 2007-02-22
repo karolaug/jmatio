@@ -4,19 +4,21 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import junit.framework.JUnit4TestAdapter;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
-
-import org.apache.log4j.Logger;
 
 import com.jmatio.io.MatFileFilter;
 import com.jmatio.io.MatFileReader;
 import com.jmatio.io.MatFileWriter;
 import com.jmatio.types.MLArray;
+import com.jmatio.types.MLCell;
 import com.jmatio.types.MLChar;
 import com.jmatio.types.MLDouble;
+import com.jmatio.types.MLStructure;
 import com.jmatio.types.MLUInt8;
 
 /**
@@ -26,13 +28,200 @@ import com.jmatio.types.MLUInt8;
  */
 public class MatIOTest
 {
-    static Logger logger = Logger.getLogger( MatIOTest.class );
+    public static junit.framework.Test suite()
+    {
+        return new JUnit4TestAdapter( MatIOTest.class );
+    }
+    
+    //@Test
+    public void testBenchmarkDouble() throws Exception
+    {
+        final String fileName = "bb.mat";
+        final String name = "bigdouble";
+//        final int SIZE = 1000;    
+        //System.out.println(14e6);
+//        ByteBuffer.allocateDirect(1000000000);
+        
+        
+//        MLDouble mlDouble = new MLDouble( name, new int[] {SIZE, SIZE} );
+//        
+//        for ( int i = 0; i < SIZE*SIZE; i++ )
+//        {
+//            mlDouble.set((double)i, i);
+//        }
+//        
+//        
+//        //write array to file
+//        ArrayList<MLArray> list = new ArrayList<MLArray>();
+//        list.add( mlDouble );
+//        
+//        //write arrays to file
+//        new MatFileWriter( fileName, list );
+//        
+        //read array form file
+        MatFileReader mfr = new MatFileReader( fileName );
+        MLArray mlArrayRetrived = mfr.getMLArray( name );
+//        
+//        System.out.println( mlArrayRetrived );
+//        System.out.println( mlArrayRetrived.contentToString() );
+        
+        //test if MLArray objects are equal
+//        assertEquals("Test if value red from file equals value stored", mlDouble, mlArrayRetrived);
+    }
+    
+    
+    //@Test 
+    public void testBenchmarkUInt8() throws Exception
+    {
+        final String fileName = "bigbyte.mat";
+        final String name = "bigbyte";
+        final int SIZE = 1000;    
+        
+        
+        MLUInt8 mluint8 = new MLUInt8( name, new int[] { SIZE, SIZE } );
+        
+        //write array to file
+        ArrayList<MLArray> list = new ArrayList<MLArray>();
+        list.add( mluint8 );
+        
+        //write arrays to file
+        new MatFileWriter( fileName, list );
+        
+        //read array form file
+        MatFileReader mfr = new MatFileReader( fileName );
+        MLArray mlArrayRetrived = mfr.getMLArray( name );
+        
+        //test if MLArray objects are equal
+        assertEquals("Test if value red from file equals value stored", mluint8, mlArrayRetrived);
+        
+    }
+    
+    @Test public void testCellFromMatlabCreatedFile() throws IOException
+    {
+        //array name
+        File file = new File("cell.mat");
+        MatFileReader reader = new MatFileReader( file );
+        MLArray mlArray = reader.getMLArray( "cel" );
+        
+        List<MLArray> towrite =  Arrays.asList( mlArray );
+        
+        MatFileWriter  writer = new MatFileWriter( "cellcopy.mat", towrite );
+    
+        reader = new MatFileReader("cellcopy.mat");
+        MLArray mlArrayRetrieved = reader.getMLArray( "cel" );
+        
+        //assertEquals(mlArray, mlArrayRetrieved);
+    }
+
+    /**
+     * Tests filtered reading
+     * 
+     * @throws IOException
+     */
+    @Test public void testFilteredReading() throws IOException
+    {
+        //1. First create arrays
+        //array name
+        String name = "doublearr";
+        String name2 = "dummy";
+        //file name in which array will be storred
+        String fileName = "filter.mat";
+
+        double[] src = new double[] { 1.3, 2.0, 3.0, 4.0, 5.0, 6.0 };
+        MLDouble mlDouble = new MLDouble( name, src, 3 );
+        MLChar mlChar = new MLChar( name2, "I am dummy" );
+        
+        //2. write arrays to file
+        ArrayList<MLArray> list = new ArrayList<MLArray>();
+        list.add( mlDouble );
+        list.add( mlChar );
+        new MatFileWriter( fileName, list );
+        
+        //3. create new filter instance
+        MatFileFilter filter = new MatFileFilter();
+        filter.addArrayName( name );
+        
+        //4. read array form file
+        MatFileReader mfr = new MatFileReader( fileName, filter );
+        
+        //check size of
+        Map<String, MLArray> content = mfr.getContent();
+        assertEquals("Test if only one array was red", 1, content.size() );
+        
+    }
+    /**
+     * Test <code>MatFileFilter</code> options
+     */
+    @Test public void testMatFileFilter()
+    {
+        //create new filter instance
+        MatFileFilter filter = new MatFileFilter();
+        
+        //empty filter should match all patterns
+        assertEquals("Test if empty filter matches all patterns", true, filter.matches("any") );
+    
+        //now add something to the filter
+        filter.addArrayName("my_array");
+        
+        //test if filter matches my_array
+        assertEquals("Test if filter matches given array name", true, filter.matches("my_array") );
+        
+        //test if filter returns false if does not match given name
+        assertEquals("Test if filter does not match non existent name", false, filter.matches("dummy") );
+    
+    }
+    
+    
+    /**
+     * Test <code>MatFileFilter</code> options
+     * @throws IOException 
+     */
+    @Test public void testMLCell() throws IOException
+    {
+        //array name
+        String name = "doublearr";
+        String name2 = "name";
+        //file name in which array will be storred
+        String fileName = "mlcell.mat";
+
+        //test column-packed vector
+        double[] src = new double[] { 1.3, 2.0, 3.0, 4.0, 5.0, 6.0 };
+
+        //create 3x2 double matrix
+        //[ 1.0 4.0 ;
+        //  2.0 5.0 ;
+        //  3.0 6.0 ]
+        MLDouble mlDouble = new MLDouble( name, src, 3 );
+        MLChar mlChar = new MLChar( name2, "none" );
+        
+        
+        MLCell mlCell = new MLCell("cl", new int[] {2,1} );
+        mlCell.set(mlChar, 0);
+        mlCell.set(mlDouble, 1);
+        
+        //write array to file
+        ArrayList<MLArray> list = new ArrayList<MLArray>();
+        list.add( mlCell );
+        
+        //write arrays to file
+        new MatFileWriter( fileName, list );
+        
+        //read array form file
+        MatFileReader mfr = new MatFileReader( fileName );
+        MLCell mlArrayRetrived = (MLCell)mfr.getMLArray( "cl" );
+        
+        assertEquals(mlDouble, mlArrayRetrived.get(1) );
+        assertEquals(mlChar, mlArrayRetrived.get(0) );
+        
+    
+    }
+    
     /**
      * Tests <code>MLChar</code> reading and writing.
      * 
      * @throws IOException
      */
-    @Test public void MLCharArrayTest() throws IOException
+    @Test public void testMLCharArray() throws IOException
     {
         //array name
         String name = "chararr";
@@ -76,7 +265,7 @@ public class MatIOTest
      * 
      * @throws IOException
      */
-    @Test public void MLDoubleArrayTest() throws IOException
+    @Test public void testMLDoubleArray() throws IOException
     {
         //array name
         String name = "doublearr";
@@ -108,6 +297,8 @@ public class MatIOTest
         MatFileReader mfr = new MatFileReader( fileName );
         MLArray mlArrayRetrived = mfr.getMLArray( name );
         
+        //System.out.println( mlDouble.contentToString() );
+        //System.out.println( mlArrayRetrived.contentToString() );
         //test if MLArray objects are equal
         assertEquals("Test if value red from file equals value stored", mlDouble, mlArrayRetrived);
         
@@ -123,13 +314,55 @@ public class MatIOTest
         //compare it with original
         assertEquals( "Test if double[][] constructor produces the same matrix as normal one", mlDouble2D, mlDouble );
     }
+
+    /**
+     * Test <code>MatFileFilter</code> options
+     * @throws IOException 
+     */
+    @Test public void testMLStructure() throws IOException
+    {
+        //array name
+        //file name in which array will be storred
+        String fileName = "mlstruct.mat";
+
+        //test column-packed vector
+        double[] src = new double[] { 1.3, 2.0, 3.0, 4.0, 5.0, 6.0 };
+        
+        //create 3x2 double matrix
+        //[ 1.0 4.0 ;
+        //  2.0 5.0 ;
+        //  3.0 6.0 ]
+        MLDouble mlDouble = new MLDouble( null, src, 3 );
+        MLChar mlChar = new MLChar( null, "I am dummy" );
+        
+        
+        MLStructure mlStruct = new MLStructure("str", new int[] {1,1} );
+        mlStruct.setField("f1", mlDouble);
+        mlStruct.setField("f2", mlChar);
+        
+        //write array to file
+        ArrayList<MLArray> list = new ArrayList<MLArray>();
+        list.add( mlStruct );
+        
+        //write arrays to file
+        new MatFileWriter( fileName, list );
+        
+        //read array form file
+        MatFileReader mfr = new MatFileReader( fileName );
+        MLStructure mlArrayRetrived = (MLStructure)mfr.getMLArray( "str" );
+        
+        assertEquals(mlDouble, mlArrayRetrived.getField("f1") );
+        assertEquals(mlChar, mlArrayRetrived.getField("f2") );
+        
+    
+    }
     
     /**
      * Tests <code>MLUint8</code> reading and writing.
      * 
      * @throws IOException
      */
-    @Test public void MLUInt8ArrayTest() throws IOException
+    @Test public void testMLUInt8Array() throws IOException
     {
         //array name
         String name = "arr";
@@ -176,71 +409,102 @@ public class MatIOTest
         //compare it with original
         assertEquals( "Test if double[][] constructor produces the same matrix as normal one", mlMLUInt82D, mluint8 );
     }
-
-    
     
     /**
-     * Test <code>MatFileFilter</code> options
+     * Regression bug
+     * 
+     * @throws Exception
      */
-    @Test public void filterTest()
+    @Test public void testReadingMLDoubleCreatedByMatlab() throws Exception
     {
-        //create new filter instance
-        MatFileFilter filter = new MatFileFilter();
+        //array name
+        String name = "arr";
+        //file name in which array will be storred
+        String fileName = "matnativedouble.mat";
+
+        //test column-packed vector
+        double[] src = new double[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
+        MLDouble mlDouble = new MLDouble( name, src, 3 );
         
-        //empty filter should match all patterns
-        assertEquals("Test if empty filter matches all patterns", true, filter.matches("any") );
+        //read array form file
+        MatFileReader mfr = new MatFileReader( fileName );
+        MLArray mlArrayRetrived = mfr.getMLArray( name );
+        
+        //test if MLArray objects are equal
+        assertEquals("Test if value red from file equals value stored", mlDouble, mlArrayRetrived);
+    }
     
-        //now add something to the filter
-        filter.addArrayName("my_array");
-        
-        //test if filter matches my_array
-        assertEquals("Test if filter matches given array name", true, filter.matches("my_array") );
-        
-        //test if filter returns false if does not match given name
-        assertEquals("Test if filter does not match non existent name", false, filter.matches("dummy") );
     
+    @Test public void testSparseFromMatlabCreatedFile() throws IOException
+    {
+        //array name
+        File file = new File("sparse.mat");
+        MatFileReader reader = new MatFileReader( file );
+        MLArray mlArray = reader.getMLArray( "spa" );
+        
+        List<MLArray> towrite =  Arrays.asList( mlArray );
+        
+        new MatFileWriter( "sparsecopy.mat", towrite );
+    
+        reader = new MatFileReader("sparsecopy.mat");
+        MLArray mlArrayRetrieved = reader.getMLArray( "spa" );
+        
+        assertEquals(mlArray, mlArrayRetrieved);
+        
+    }
+    
+    @Test public void testStructureFromMatlabCreatedFile() throws IOException
+    {
+        //array name
+        File file = new File("simplestruct.mat");
+        MatFileReader reader = new MatFileReader( file );
+        MLArray mlArray = reader.getMLArray( "structure" );
+        
+        List<MLArray> towrite =  Arrays.asList( mlArray );
+        
+        new MatFileWriter( "simplestructcopy.mat", towrite );
+    
+        reader = new MatFileReader("simplestructcopy.mat");
+        MLArray mlArrayRetrieved = reader.getMLArray( "structure" );
     }
     
     /**
-     * Tests filtered reading
+     * Regression bug: Test writing several arrays into a single file.
      * 
      * @throws IOException
      */
-    @Test public void filteredReadingTest() throws IOException
+    @Test public void testWritingManyArraysInFile() throws IOException
     {
-        //1. First create arrays
-        //array name
-        String name = "doublearr";
-        String name2 = "dummy";
-        //file name in which array will be storred
-        String fileName = "filter.mat";
+        final String fileName = "multi.mat";
 
+        //test column-packed vector
         double[] src = new double[] { 1.3, 2.0, 3.0, 4.0, 5.0, 6.0 };
-        MLDouble mlDouble = new MLDouble( name, src, 3 );
-        MLChar mlChar = new MLChar( name2, "I am dummy" );
-        
-        //2. write arrays to file
+        double[] src2 = new double[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
+        double[] src3 = new double[] { 3.1415 };
+
+        //create 3x2 double matrix
+        //[ 1.0 4.0 ;
+        //  2.0 5.0 ;
+        //  3.0 6.0 ]
+        MLDouble m1 = new MLDouble( "m1", src, 3 );
+        MLDouble m2= new MLDouble( "m2", src2, 3 );
+        MLDouble m3 = new MLDouble( "m3", src3, 1 );
+        //write array to file
         ArrayList<MLArray> list = new ArrayList<MLArray>();
-        list.add( mlDouble );
-        list.add( mlChar );
+        list.add( m1);
+        list.add( m2);
+        list.add( m3);
+        
+        //write arrays to file
         new MatFileWriter( fileName, list );
         
-        //3. create new filter instance
-        MatFileFilter filter = new MatFileFilter();
-        filter.addArrayName( name );
+        //read array form file
+        MatFileReader mfr = new MatFileReader( fileName );
         
-        //4. read array form file
-        MatFileReader mfr = new MatFileReader( fileName, filter );
-        
-        //check size of
-        Map<String, MLArray> content = mfr.getContent();
-        assertEquals("Test if only one array was red", 1, content.size() );
-        
-    }
-    
-    public static junit.framework.Test suite()
-    {
-        return new JUnit4TestAdapter( MatIOTest.class );
+        //test if MLArray objects are equal
+        assertEquals("Test if value red from file equals value stored", m1, mfr.getMLArray( "m1" ));
+        assertEquals("Test if value red from file equals value stored", m2, mfr.getMLArray( "m2" ));
+        assertEquals("Test if value red from file equals value stored", m3, mfr.getMLArray( "m3" ));
     }
     
     
