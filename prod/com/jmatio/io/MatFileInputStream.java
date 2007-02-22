@@ -152,7 +152,23 @@ class MatFileInputStream
         }
     }
 
-    public ByteBuffer readToByteBuffer(ByteBuffer dest, int elements, ByteStorageSupport storage) throws IOException
+    /**
+     * Reads the data into a <code>{@link ByteBuffer}</code>. This method is
+     * only supported for arrays with backing ByteBuffer (<code>{@link ByteStorageSupport}</code>).
+     * 
+     * @param dest
+     *            the destination <code>{@link ByteBuffer}</code>
+     * @param elements
+     *            the number of elements to read into a buffer
+     * @param storage
+     *            the backing <code>{@link ByteStorageSupport}</code> that
+     *            gives information how data should be interpreted
+     * @return reference to the destination <code>{@link ByteBuffer}</code>
+     * @throws IOException
+     *             if buffer is under-fed, or another IO problem occurs
+     */
+    public ByteBuffer readToByteBuffer(ByteBuffer dest, int elements,
+                    ByteStorageSupport storage) throws IOException
     {
         
         int bytesAllocated = storage.getBytesAllocated();
@@ -161,14 +177,14 @@ class MatFileInputStream
         if ( MatDataTypes.sizeOf(type) == bytesAllocated )
         {
             int bufMaxSize = 1024;
-            int bufSize = buf.remaining() < bufMaxSize ? buf.remaining() : bufMaxSize;
+            int bufSize = Math.min(buf.remaining(), bufMaxSize);
             int bufPos = buf.position();
             
             byte[] tmp = new byte[ bufSize ];
             
             while ( dest.remaining() > 0 )
             {
-                int length = dest.remaining() > tmp.length ? tmp.length : dest.remaining();
+                int length = Math.min(dest.remaining(), tmp.length);
                 buf.get( tmp, 0, length );
                 dest.put( tmp, 0, length );
             }
@@ -176,6 +192,8 @@ class MatFileInputStream
         }
         else
         {
+            //because Matlab writes data not respectively to the declared
+            //matrix type, the reading is not straight forward (as above)
             Class clazz = storage.getStorageClazz();
             while ( dest.remaining() > 0 )
             {

@@ -1,19 +1,23 @@
 package com.jmatio.io;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.Channel;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
+import java.util.zip.InflaterInputStream;
 
 import com.jmatio.common.MatDataTypes;
 import com.jmatio.types.ByteStorageSupport;
@@ -197,15 +201,32 @@ public class MatFileReader
      * @throws IOException
      *             when error occurs while reading or inflating the buffer .
      */
-    private ByteBuffer inflate(ByteBuffer buf, int numOfBytes) throws IOException
+    private ByteBuffer inflate(final ByteBuffer buf, final int numOfBytes) throws IOException
     {
-        byte[] compressed = new byte[numOfBytes];
-        buf.get(compressed);
+        if ( buf.remaining() < numOfBytes )
+        {
+            throw new MatlabIOException("Compressed buffer length miscalculated!");
+        }
         
-        //get new inflater instance
-        Inflater decompresser = new Inflater();
-        decompresser.setInput(compressed);
+        //instead of standard Inlater class instance I use an inflater input
+        //stream... gives a great boost to the performance
+        InflaterInputStream iis = new InflaterInputStream( new InputStream() {
+
+            @Override
+            public synchronized int read() throws IOException
+            {
+                // TODO Auto-generated method stub
+                throw new RuntimeException("Not yet implemented");
+            } 
+            public synchronized int read(byte[] bytes, int off, int len) throws IOException {
+                // Read only what's left
+                len = Math.min(len, buf.remaining());
+                buf.get(bytes, off, len);
+                return len;
+            }        
+        });
         
+        //process data decompression
         byte[] result = new byte[128];
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream( baos );
@@ -214,24 +235,24 @@ public class MatFileReader
         {
             do
             {
-                i = decompresser.inflate(result);
+                i = iis.read(result);
                 dos.write(result);
             }
             while ( i > 0 );
-            
         }
-        catch ( DataFormatException e )
+        catch ( IOException e )
         {
             throw new MatlabIOException("Could not decompress data: " + e );
         }
         finally
         {
-            decompresser.end();
+            iis.close();
         }
+        //create a ByteBuffer from the deflated data
         ByteBuffer out = ByteBuffer.wrap( baos.toByteArray() );
+        //with proper byte ordering
         out.order( byteOrder );
         return out;
-        
     }
     /**
      * Reads data form byte buffer. Searches for either
