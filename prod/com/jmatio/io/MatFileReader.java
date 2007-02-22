@@ -187,6 +187,8 @@ public class MatFileReader
     {
         return data;
     }
+    
+    
     /**
      * Decompresses (inflates) bytes from input stream.
      * 
@@ -212,6 +214,7 @@ public class MatFileReader
         //stream... gives a great boost to the performance
         InflaterInputStream iis = new InflaterInputStream( new InputStream() {
 
+            int limit = numOfBytes;
             @Override
             public synchronized int read() throws IOException
             {
@@ -219,9 +222,14 @@ public class MatFileReader
                 throw new RuntimeException("Not yet implemented");
             } 
             public synchronized int read(byte[] bytes, int off, int len) throws IOException {
+                if ( !(limit > 0) )
+                {
+                    return -1;
+                }
+                len = Math.min(len, limit);
                 // Read only what's left
-                len = Math.min(len, buf.remaining());
                 buf.get(bytes, off, len);
+                limit -= len;
                 return len;
             }        
         });
@@ -229,14 +237,14 @@ public class MatFileReader
         //process data decompression
         byte[] result = new byte[128];
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        DataOutputStream dos = new DataOutputStream( baos );
         int i;
         try
         {
             do
             {
-                i = iis.read(result);
-                dos.write(result);
+                i = iis.read(result, 0, result.length);
+                int len = Math.max(0, i);
+                baos.write(result, 0, len);
             }
             while ( i > 0 );
         }
