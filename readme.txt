@@ -1,6 +1,37 @@
-JMatIO is a JAVA library to read/write/manipulate with Matlab's binary
+JMatIO is a JAVA library to read/write/manipulate with Matlab binary
 MAT-files.
 
+If you would like to comment, improve, critisize the project please 
+email me: wgradkowski@gmail.com 
+
+or visit JMatIO project page at Sourceforge:
+http://www.sourceforge.net/projects/jmatio
+
+Have fun :)
+
+Wojciech Gradkowski
+
+CHANGE LOG:
+
+[22.02.2007]
++ Added support:UInt8 array 
++ MAJOR reading performance enhancement - reading is as fast as in Matlab now
++ Removed Log4j references
+
+TODO:
+- Other array types (serialized objects (OPAQUE) is done partially)
+- Writer performance enhancement
+- Documentation and examples
+- Organize JUnit tests
+- Refactor exceptions
+- Make structures and cell arrays more user friendly
+
+NOTE:
+Numerical arrays (MLDouble, MLUint8) are now backed by direct ByteBuffers. For really BIG arrays
+the maximum heap size for direct buffers may be modified by -XX:MaxDirectMemorySize=<size>
+
+
+[some.time.2006]
 Currently supproted data types are:
 + Double array
 + Char array
@@ -8,25 +39,3 @@ Currently supproted data types are:
 + Cell array
 + Sparase array
 
-If you would like to comment, improve, critisize the project please 
-email me: wgradkowski@gmail.com 
-
-or visit JMatIO project page at Sourceforge:
-
-http://www.sourceforge.net/projects/jmatio
-
-For current version please check CVS repository:
-
-cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/jmatio login
-cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/jmatio co -P JMatIO
-
-Note:
-
-JMatIO uses external libraries:
-+ Log4j [http://logging.apache.org/log4j/docs/]
-+ JUnit [http://junit.org]
-
-
-Have fun :)
-
-Wojciech Gradkowski
