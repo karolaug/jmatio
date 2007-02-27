@@ -21,6 +21,8 @@ public abstract class MLNumericArray<T extends Number> extends MLArray
 {
     private ByteBuffer real;
     private ByteBuffer imaginary;
+    /** The buffer for creating Number from bytes */
+    private final byte[] bytes;
     
     /**
      * Normally this constructor is used only by MatFileReader and MatFileWriter
@@ -39,6 +41,7 @@ public abstract class MLNumericArray<T extends Number> extends MLArray
         {
             imaginary = ByteBuffer.allocateDirect( getSize()*getBytesAllocated());
         }
+        bytes = new byte[ getBytesAllocated() ];
     }
     /**
      * <a href="http://math.nist.gov/javanumerics/jama/">Jama</a> [math.nist.gov] style: 
@@ -247,15 +250,14 @@ public abstract class MLNumericArray<T extends Number> extends MLArray
         return index*getBytesAllocated();
     }
     
-    private T _get( ByteBuffer buffer, int index )
+    protected T _get( ByteBuffer buffer, int index )
     {
-        byte[] bytes = new byte[ getBytesAllocated() ];
         buffer.position( getByteOffset(index) );
-        buffer.get( bytes );
+        buffer.get( bytes, 0, bytes.length );
         return buldFromBytes( bytes );
     }
     
-    private void _set( ByteBuffer buffer, T value, int index )
+    protected void _set( ByteBuffer buffer, T value, int index )
     {
         buffer.position( getByteOffset(index) );
         buffer.put( getByteArray( value ) );

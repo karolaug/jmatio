@@ -153,5 +153,16 @@ public class MLUInt8 extends MLNumericArray<Byte>
     {
         return Byte.class;
     }
+    
+    /**
+     * Override to accelerate the performance
+     * 
+     * @see com.jmatio.types.MLNumericArray#_get(java.nio.ByteBuffer, int)
+     */
+    @Override
+    protected Byte _get( ByteBuffer buffer, int index )
+    {
+        return buffer.get( index );
+    }
 
 }
