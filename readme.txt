@@ -7,10 +7,10 @@ email me: wgradkowski@gmail.com
 or visit JMatIO project page at Sourceforge:
 http://www.sourceforge.net/projects/jmatio
 
- Subversion Access
+Subversion Access
 
 This project's SourceForge.net Subversion repository can be checked out through SVN with the following instruction set:
-svn co https://jmatio.svn.sourceforge.net/svnroot/jmatio jmatio 
+svn co https://jmatio.svn.sourceforge.net/svnroot/jmatio/trunk jmatio 
 
 Have fun :)
 
