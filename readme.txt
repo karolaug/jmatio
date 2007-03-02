@@ -9,7 +9,9 @@ http://www.sourceforge.net/projects/jmatio
 
 Subversion Access
 
-This project's SourceForge.net Subversion repository can be checked out through SVN with the following instruction set:
+This project's SourceForge.net Subversion repository can be checked out through 
+SVN with the following instruction set:
+
 svn co https://jmatio.svn.sourceforge.net/svnroot/jmatio/trunk jmatio 
 
 Have fun :)
@@ -17,6 +19,9 @@ Have fun :)
 Wojciech Gradkowski
 
 CHANGE LOG:
+[02.03.2007]
++ Regression bug fixed: Double arrays created natively in Matlab are read 
+  incorrectly (reversed byte ordering)
 
 [22.02.2007]
 + Added support:UInt8 array 
@@ -32,8 +37,9 @@ TODO:
 - Make structures and cell arrays more user friendly
 
 NOTE:
-Numerical arrays (MLDouble, MLUint8) are now backed by direct ByteBuffers. For really BIG arrays
-the maximum heap size for direct buffers may be modified by -XX:MaxDirectMemorySize=<size>
+Numerical arrays (MLDouble, MLUint8) are now backed by direct ByteBuffers. For 
+really BIG arrays the maximum heap size for direct buffers may be modified by 
+-XX:MaxDirectMemorySize=<size>
 
 
 [some.time.2006]

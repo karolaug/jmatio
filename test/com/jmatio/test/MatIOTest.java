@@ -6,6 +6,8 @@ import junit.framework.JUnit4TestAdapter;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +20,7 @@ import com.jmatio.types.MLArray;
 import com.jmatio.types.MLCell;
 import com.jmatio.types.MLChar;
 import com.jmatio.types.MLDouble;
+import com.jmatio.types.MLNumericArray;
 import com.jmatio.types.MLStructure;
 import com.jmatio.types.MLUInt8;
 
@@ -90,6 +93,15 @@ public class MatIOTest
         //read array form file
         MatFileReader mfr = new MatFileReader( fileName );
         MLArray mlArrayRetrived = mfr.getMLArray( name );
+        
+        final long start = System.nanoTime();
+        for ( int i = 0; i < mlArrayRetrived.getSize(); i++ )
+        {
+            ((MLNumericArray)mlArrayRetrived).get(i);
+        }
+        final long stop = System.nanoTime();
+        System.out.println("--> " + (stop - start)/1e6 +  "[ns]");
+        
         
         //test if MLArray objects are equal
         assertEquals("Test if value red from file equals value stored", mluint8, mlArrayRetrived);
@@ -419,7 +431,7 @@ public class MatIOTest
     {
         //array name
         String name = "arr";
-        //file name in which array will be storred
+        //file name in which array will be stored
         String fileName = "test/matnativedouble.mat";
 
         //test column-packed vector
@@ -434,6 +446,35 @@ public class MatIOTest
         assertEquals("Test if value red from file equals value stored", mlDouble, mlArrayRetrived);
     }
     
+    /**
+     * Regression bug.
+     
+     * <pre><code>
+     * Matlab code:
+     * >> arr = [1.1, 4.4; 2.2, 5.5; 3.3, 6.6];
+     * >> save('matnativedouble2', arr);
+     * </code></pre>
+     * 
+     * @throws IOException
+     */
+    @Test public void testDoubleFromMatlabCreatedFile2() throws IOException
+    {
+        //array name
+        String name = "arr";
+        //file name in which array will be stored
+        String fileName = "test/matnativedouble2.mat";
+
+        //test column-packed vector
+        double[] src = new double[] { 1.1, 2.2, 3.3, 4.4, 5.5, 6.6 };
+        MLDouble mlDouble = new MLDouble( name, src, 3 );
+        
+        //read array form file
+        MatFileReader mfr = new MatFileReader( fileName );
+        MLArray mlArrayRetrived = mfr.getMLArray( name );
+        
+        //test if MLArray objects are equal
+        assertEquals("Test if value red from file equals value stored", mlDouble, mlArrayRetrived);
+    }
     
     @Test public void testSparseFromMatlabCreatedFile() throws IOException
     {
@@ -508,4 +549,24 @@ public class MatIOTest
     }
     
     
+    /**
+     * 
+     * <pre><code>
+     * >> x = NaN;
+     * >> save('nan', 'x');
+     * </code></pre>
+     * @throws IOException
+     */
+    @Test public void testReadingNaN() throws IOException
+    {
+        final String fileName = "test/nan.mat";
+        
+        //read array form file
+        MatFileReader mfr = new MatFileReader( fileName );
+        
+        assertEquals("Test if value red from file equals NaN", Double.NaN, 
+                                    ((MLDouble)mfr.getMLArray( "x" )).get(0,0) );
+        
+        
+    }
 }

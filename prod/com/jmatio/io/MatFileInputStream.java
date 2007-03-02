@@ -2,15 +2,9 @@ package com.jmatio.io;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.BitSet;
-
-import sun.reflect.Reflection;
 
 import com.jmatio.common.MatDataTypes;
 import com.jmatio.types.ByteStorageSupport;
-import com.jmatio.types.MLArray;
-import com.jmatio.types.MLNumericArray;
 
 /**
  * MAT-file input stream class. 
@@ -174,7 +168,8 @@ class MatFileInputStream
         int bytesAllocated = storage.getBytesAllocated();
         int size = elements * storage.getBytesAllocated();
         
-        if ( MatDataTypes.sizeOf(type) == bytesAllocated )
+        //direct buffer copy
+        if ( MatDataTypes.sizeOf(type) == bytesAllocated && buf.order().equals(dest.order()) )
         {
             int bufMaxSize = 1024;
             int bufSize = Math.min(buf.remaining(), bufMaxSize);
