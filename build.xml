@@ -53,9 +53,23 @@
 	</target>
 
 	<!-- ================================= 
+          target: copy-resources              
+         ================================= -->
+	<target name="copy-resources" depends="init" description="--> Copies resource files">
+		<copy todir="${build.resource}">
+			<fileset dir="${dev.dir}">
+				<include name="**/*.txt"/>
+			</fileset>
+		</copy>
+		<copy todir="${build.test}">
+			<fileset dir="${dev.test}"/>
+		</copy>
+	</target>
+
+	<!-- ================================= 
           target: compile              
          ================================= -->
-	<target name="compile" depends="prepare-src" description="--> Compiles source folder">
+	<target name="compile" depends="prepare-src, copy-resources" description="--> Compiles source folder">
 		<mkdir dir="${build.bin}"/>
 		<javac srcdir="${build.src}" 
 			   destdir="${build.bin}" 
@@ -64,17 +78,6 @@
 			   optimize="yes"
 			   target="1.5"
 		/>
-	</target>
-
-	<!-- ================================= 
-          target: copy-resources              
-         ================================= -->
-	<target name="copy-resources" depends="init" description="--> Copies resource files">
-		<copy todir="${build.resource}">
-			<fileset dir="${dev.dir}">
-				<include name="*.txt"/>
-			</fileset>
-		</copy>
 	</target>
 	
 	
