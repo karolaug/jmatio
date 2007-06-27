@@ -1,13 +1,11 @@
 package com.jmatio.test;
 
 import org.junit.Test;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import junit.framework.JUnit4TestAdapter;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -76,7 +74,7 @@ public class MatIOTest
     }
     
     
-    //@Test 
+    @Test 
     public void testBenchmarkUInt8() throws Exception
     {
         final String fileName = "bigbyte.mat";
@@ -111,7 +109,8 @@ public class MatIOTest
         
     }
     
-    @Test public void testCellFromMatlabCreatedFile() throws IOException
+    @Test 
+    public void testCellFromMatlabCreatedFile() throws IOException
     {
         //array name
         File file = new File("test/cell.mat");
@@ -133,7 +132,8 @@ public class MatIOTest
      * 
      * @throws IOException
      */
-    @Test public void testFilteredReading() throws IOException
+    @Test 
+    public void testFilteredReading() throws IOException
     {
         //1. First create arrays
         //array name
@@ -167,7 +167,8 @@ public class MatIOTest
     /**
      * Test <code>MatFileFilter</code> options
      */
-    @Test public void testMatFileFilter()
+    @Test 
+    public void testMatFileFilter()
     {
         //create new filter instance
         MatFileFilter filter = new MatFileFilter();
@@ -191,7 +192,8 @@ public class MatIOTest
      * Test <code>MatFileFilter</code> options
      * @throws IOException 
      */
-    @Test public void testMLCell() throws IOException
+    @Test 
+    public void testMLCell() throws IOException
     {
         //array name
         String name = "doublearr";
@@ -236,7 +238,8 @@ public class MatIOTest
      * 
      * @throws IOException
      */
-    @Test public void testMLCharArray() throws IOException
+    @Test 
+    public void testMLCharArray() throws IOException
     {
         //array name
         String name = "chararr";
@@ -280,7 +283,8 @@ public class MatIOTest
      * 
      * @throws IOException
      */
-    @Test public void testMLDoubleArray() throws IOException
+    @Test 
+    public void testMLDoubleArray() throws IOException
     {
         //array name
         String name = "doublearr";
@@ -334,7 +338,8 @@ public class MatIOTest
      * Test <code>MatFileFilter</code> options
      * @throws IOException 
      */
-    @Test public void testMLStructure() throws IOException
+    @Test
+    public void testMLStructure() throws IOException
     {
         //array name
         //file name in which array will be storred
@@ -377,7 +382,8 @@ public class MatIOTest
      * 
      * @throws IOException
      */
-    @Test public void testMLUInt8Array() throws IOException
+    @Test 
+    public void testMLUInt8Array() throws IOException
     {
         //array name
         String name = "arr";
@@ -430,7 +436,8 @@ public class MatIOTest
      * 
      * @throws Exception
      */
-    @Test public void testDoubleFromMatlabCreatedFile() throws Exception
+    @Test 
+    public void testDoubleFromMatlabCreatedFile() throws Exception
     {
         //array name
         String name = "arr";
@@ -460,7 +467,8 @@ public class MatIOTest
      * 
      * @throws IOException
      */
-    @Test public void testDoubleFromMatlabCreatedFile2() throws IOException
+    @Test 
+    public void testDoubleFromMatlabCreatedFile2() throws IOException
     {
         //array name
         String name = "arr";
@@ -479,7 +487,8 @@ public class MatIOTest
         assertEquals("Test if value red from file equals value stored", mlDouble, mlArrayRetrived);
     }
     
-    @Test public void testSparseFromMatlabCreatedFile() throws IOException
+    @Test 
+    public void testSparseFromMatlabCreatedFile() throws IOException
     {
         //array name
         File file = new File("test/sparse.mat");
@@ -497,7 +506,8 @@ public class MatIOTest
         
     }
     
-    @Test public void testStructureFromMatlabCreatedFile() throws IOException
+    @Test 
+    public void testStructureFromMatlabCreatedFile() throws IOException
     {
         //array name
         File file = new File("test/simplestruct.mat");
@@ -517,7 +527,8 @@ public class MatIOTest
      * 
      * @throws IOException
      */
-    @Test public void testWritingManyArraysInFile() throws IOException
+    @Test 
+    public void testWritingManyArraysInFile() throws IOException
     {
         final String fileName = "multi.mat";
 
@@ -560,7 +571,8 @@ public class MatIOTest
      * </code></pre>
      * @throws IOException
      */
-    @Test public void testReadingNaN() throws IOException
+    @Test 
+    public void testReadingNaN() throws IOException
     {
         final String fileName = "test/nan.mat";
         
@@ -573,7 +585,8 @@ public class MatIOTest
         
     }
     
-    @Test public void testUInt8() throws Exception
+    @Test 
+    public void testUInt8() throws Exception
     {
         String fileName = "test/uint8.mat";
         String arrName = "arr";
@@ -614,7 +627,8 @@ public class MatIOTest
                 mfr.getMLArray( arrName ) );
     }
 
-    @Test public void testInt8() throws Exception
+    @Test 
+    public void testInt8() throws Exception
     {
         String fileName = "test/int8.mat";
         String arrName = "arr";
@@ -705,7 +719,7 @@ public class MatIOTest
                 mfr.getMLArray( arrName ) );
 
     }
-    //@Test 
+    @Test 
     public void testUInt64() throws Exception
     {
         String fileName = "test/uint64.mat";
@@ -753,6 +767,45 @@ public class MatIOTest
 
     }
     
+    @Test
+    public void testWritingMethods() throws IOException
+    {
+        final String fileName = "nwrite.mat";
+        final File f = new File(fileName);
+        //test column-packed vector
+        double[] src = new double[] { 1.3, 2.0, 3.0, 4.0, 5.0, 6.0 };
+
+        //create 3x2 double matrix
+        //[ 1.0 4.0 ;
+        //  2.0 5.0 ;
+        //  3.0 6.0 ]
+        MLDouble m1 = new MLDouble( "m1", src, 3 );
+        //write array to file
+        ArrayList<MLArray> list = new ArrayList<MLArray>();
+        list.add( m1);
+        
+        MatFileWriter writer = new MatFileWriter();
+        
+        writer.write(f, list);
+        
+        assertTrue("Test if file was created", f.exists() );
+        
+        //try to read it
+        MatFileReader reader = new MatFileReader();
+        reader.read(f, MatFileReader.DIRECT_BYTE_BUFFER );
+        //MLArray array = reader.getMLArray("m1");
+        //assertEquals("Test if is correct file", array, m1);
+        
+        //try to delete the file
+        assertTrue("Test if file can be deleted", f.delete() );
+        
+        writer.write(fileName, list);
+        
+        assertTrue("Test if file was created", f.exists() );
+        reader.read(f, MatFileReader.DIRECT_BYTE_BUFFER );
+        assertEquals("Test if is correct file", reader.getMLArray("m1"), m1);
+        
+    }
     
     
 }

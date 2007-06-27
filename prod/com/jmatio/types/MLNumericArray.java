@@ -377,5 +377,17 @@ public abstract class MLNumericArray<T extends Number> extends MLArray
         return true;
     }
     
+    public void dispose()
+    {
+        if ( real != null )
+        {
+            real.clear();
+        }
+        if ( imaginary != null )
+        {
+            real.clear();
+        }
+        
+    }
     
 }

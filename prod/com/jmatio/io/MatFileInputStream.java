@@ -164,7 +164,7 @@ class MatFileInputStream
      *             if buffer is under-fed, or another IO problem occurs
      */
     public ByteBuffer readToByteBuffer(ByteBuffer dest, int elements,
-                    ByteStorageSupport storage) throws IOException
+                    ByteStorageSupport<?> storage) throws IOException
     {
         
         int bytesAllocated = storage.getBytesAllocated();
@@ -191,7 +191,7 @@ class MatFileInputStream
         {
             //because Matlab writes data not respectively to the declared
             //matrix type, the reading is not straight forward (as above)
-            Class clazz = storage.getStorageClazz();
+            Class<?> clazz = storage.getStorageClazz();
             while ( dest.remaining() > 0 )
             {
                 if ( clazz.equals( Double.class) )

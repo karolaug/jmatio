@@ -1,22 +1,21 @@
 package com.jmatio.io;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.Channel;
 import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.zip.DataFormatException;
-import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 import com.jmatio.common.MatDataTypes;
@@ -58,6 +57,10 @@ import com.jmatio.types.MLUInt8;
  */
 public class MatFileReader
 {
+    public static final int MEMORY_MAPPED_FILE = 0;
+    public static final int DIRECT_BYTE_BUFFER = 1;
+    public static final int HEAP_BYTE_BUFFER   = 2;
+    
     /**
      * MAT-file header
      */
@@ -117,34 +120,166 @@ public class MatFileReader
         
     }
     /**
-     * Creates instance of <code>MatFileReader</code> and reads MAT-file 
-     * from <code>file</code>.
+     * Creates instance of <code>MatFileReader</code> and reads MAT-file from
+     * <code>file</code>.
+     * <p>
+     * Results are filtered by <code>MatFileFilter</code>. Arrays that do not
+     * meet filter match condition will not be available in results.
+     * <p>
+     * <i>Note: this method reads file using the memory mapped file policy, see
+     * notes to </code>{@link #read(File, MatFileFilter, com.jmatio.io.MatFileReader.MallocPolicy)}</code>
      * 
-     * Results are filtered by <code>MatFileFilter</code>. Arrays that do not meet
-     * filter match condition will not be available in results.
-     * 
-     * @param file the MAT-file
-     * @param MatFileFilter array name filter.
-     * @throws IOException when error occurred while processing the file.
+     * @param file
+     *            the MAT-file
+     * @param MatFileFilter
+     *            array name filter.
+     * @throws IOException
+     *             when error occurred while processing the file.
      */
     public MatFileReader(File file, MatFileFilter filter) throws IOException
     {
+        this();
+        
+        read(file, filter, MEMORY_MAPPED_FILE);
+    }
+    
+    public MatFileReader()
+    {
+        filter  = new MatFileFilter();
+        data    = new LinkedHashMap<String, MLArray>();
+    }
+    
+    /**
+     * Reads the content of a MAT-file and returns the mapped content.
+     * <p>
+     * This method calls
+     * <code>read(file, new MatFileFilter(), MallocPolicy.MEMORY_MAPPED_FILE)</code>.
+     * 
+     * @param file
+     *            a valid MAT-file file to be read
+     * @return the same as <code>{@link #getContent()}</code>
+     * @throws IOException
+     *             if error occurs during file processing
+     */
+    public Map<String, MLArray> read(File file) throws IOException
+    {
+       return read(file, new MatFileFilter(), MEMORY_MAPPED_FILE);
+    }
+    /**
+     * Reads the content of a MAT-file and returns the mapped content.
+     * <p>
+     * This method calls
+     * <code>read(file, new MatFileFilter(), policy)</code>.
+     * 
+     * @param file
+     *            a valid MAT-file file to be read
+     * @param policy
+     *            the file memory allocation policy
+     * @return the same as <code>{@link #getContent()}</code>
+     * @throws IOException
+     *             if error occurs during file processing
+     */
+    public Map<String, MLArray> read(File file, int policy) throws IOException
+    {
+        return read(file, new MatFileFilter(), policy);
+    }
+    /**
+     * Reads the content of a MAT-file and returns the mapped content.
+     * <p>
+     * Because of java bug <a
+     * href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4715154">#4715154</a>
+     * different allocation modes are available.
+     * <ul>
+     * <li><code>{@link #MEMORY_MAPPED_FILE}</code> - a memory mapped file</li>
+     * <li><code>{@link #DIRECT_BYTE_BUFFER}</code> - a uses
+     * <code>{@link ByteBuffer#allocateDirect(int)}</code> method to read in
+     * the file contents</li>
+     * <li><code>{@link #HEAP_BYTE_BUFFER}</code> - a uses
+     * <code>{@link ByteBuffer#allocate(int)}</code> method to read in the
+     * file contents</li>
+     * </ul>
+     * <i>Note: memory mapped files cannot be re-opened to write neither deleted
+     * until VM stops working and releases mapping</i>
+     * 
+     * @param file
+     *            a valid MAT-file file to be read
+     * @param filter
+     *            the array filter applied during reading
+     * @param policy
+     *            the file memory allocation policy
+     * @return the same as <code>{@link #getContent()}</code>
+     * @see {@link MatFileFilter}
+     * @throws IOException
+     *             if error occurs during file processing
+     */
+    public Map<String, MLArray> read(File file, MatFileFilter filter,
+            int policy) throws IOException
+    {
         this.filter = filter;
-        data = new LinkedHashMap<String, MLArray>();
         
-        //Create a read-only memory-mapped file
-        FileChannel roChannel = new RandomAccessFile(file, "r").getChannel();
-        ByteBuffer buf = roChannel.map(FileChannel.MapMode.READ_ONLY, 0, (int)roChannel.size());        
-        
-        //read in file header
-        readHeader(buf);
-        
-        while ( buf.remaining() > 0 )
+        //clear the results
+        for ( String key : data.keySet() )
         {
-            readData( buf );
+            data.remove(key);
         }
-        //close file channel
-        roChannel.close();
+        
+        FileChannel roChannel = null;
+        RandomAccessFile raFile = null;
+        try
+        {
+            //Create a read-only memory-mapped file
+            raFile = new RandomAccessFile(file, "r");
+            roChannel = raFile.getChannel();
+            // until java bug #4715154 is fixed I am not using memory mapped files
+            // The bug disables re-opening the memory mapped files for writing
+            // or deleting until the VM stops working. In real life I need to open
+            // and update files
+            ByteBuffer buf = null;
+            switch ( policy )
+            {
+                case DIRECT_BYTE_BUFFER:
+                    buf = ByteBuffer.allocateDirect( (int)roChannel.size() );
+                    roChannel.read(buf, 0);
+                    buf.rewind();
+                    break;
+                case HEAP_BYTE_BUFFER:
+                    buf = ByteBuffer.allocate( (int)roChannel.size() );
+                    roChannel.read(buf, 0);
+                    buf.rewind();
+                    break;
+                case MEMORY_MAPPED_FILE:
+                    buf = roChannel.map(FileChannel.MapMode.READ_ONLY, 0, (int)roChannel.size());        
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown file allocation policy");
+            }
+            
+            //read in file header
+            readHeader(buf);
+            
+            while ( buf.remaining() > 0 )
+            {
+                readData( buf );
+            }
+            
+            return getContent();
+        }
+        catch ( IOException e )
+        {
+            throw e;
+        }
+        finally
+        {
+            if ( roChannel != null )
+            {
+                //close file channel
+                roChannel.close();
+            }
+            if ( raFile != null )
+            {
+                raFile.close();
+            }
+        }
         
     }
     /**
@@ -434,70 +569,70 @@ public class MatFileReader
                 mlArray = new MLDouble(name, dims, type, attributes);
                 //read real
                 tag = new ISMatTag(buf);
-                tag.readToByteBuffer( ((MLNumericArray) mlArray).getRealByteBuffer(),
-                                            (MLNumericArray) mlArray );
+                tag.readToByteBuffer( ((MLNumericArray<?>) mlArray).getRealByteBuffer(),
+                                            (MLNumericArray<?>) mlArray );
                 //read complex
                 if ( mlArray.isComplex() )
                 {
                     tag = new ISMatTag(buf);
-                    tag.readToByteBuffer( ((MLNumericArray) mlArray).getImaginaryByteBuffer(),
-                            (MLNumericArray) mlArray );
+                    tag.readToByteBuffer( ((MLNumericArray<?>) mlArray).getImaginaryByteBuffer(),
+                            (MLNumericArray<?>) mlArray );
                 }
                 break;
             case MLArray.mxUINT8_CLASS:
                 mlArray = new MLUInt8(name, dims, type, attributes);
                 //read real
                 tag = new ISMatTag(buf);
-                tag.readToByteBuffer( ((MLNumericArray) mlArray).getRealByteBuffer(),
-                                            (MLNumericArray) mlArray );
+                tag.readToByteBuffer( ((MLNumericArray<?>) mlArray).getRealByteBuffer(),
+                                            (MLNumericArray<?>) mlArray );
                 //read complex
                 if ( mlArray.isComplex() )
                 {
                     tag = new ISMatTag(buf);
-                    tag.readToByteBuffer( ((MLNumericArray) mlArray).getImaginaryByteBuffer(),
-                            (MLNumericArray) mlArray );
+                    tag.readToByteBuffer( ((MLNumericArray<?>) mlArray).getImaginaryByteBuffer(),
+                            (MLNumericArray<?>) mlArray );
                 }
                 break;
             case MLArray.mxINT8_CLASS:
                 mlArray = new MLInt8(name, dims, type, attributes);
                 //read real
                 tag = new ISMatTag(buf);
-                tag.readToByteBuffer( ((MLNumericArray) mlArray).getRealByteBuffer(),
-                                            (MLNumericArray) mlArray );
+                tag.readToByteBuffer( ((MLNumericArray<?>) mlArray).getRealByteBuffer(),
+                                            (MLNumericArray<?>) mlArray );
                 //read complex
                 if ( mlArray.isComplex() )
                 {
                     tag = new ISMatTag(buf);
-                    tag.readToByteBuffer( ((MLNumericArray) mlArray).getImaginaryByteBuffer(),
-                            (MLNumericArray) mlArray );
+                    tag.readToByteBuffer( ((MLNumericArray<?>) mlArray).getImaginaryByteBuffer(),
+                            (MLNumericArray<?>) mlArray );
                 }
                 break;
             case MLArray.mxINT64_CLASS:
                 mlArray = new MLInt64(name, dims, type, attributes);
                 //read real
                 tag = new ISMatTag(buf);
-                tag.readToByteBuffer( ((MLNumericArray) mlArray).getRealByteBuffer(),
-                                            (MLNumericArray) mlArray );
+                tag.readToByteBuffer( ((MLNumericArray<?>) mlArray).getRealByteBuffer(),
+                                            (MLNumericArray<?>) mlArray );
                 //read complex
                 if ( mlArray.isComplex() )
                 {
                     tag = new ISMatTag(buf);
-                    tag.readToByteBuffer( ((MLNumericArray) mlArray).getImaginaryByteBuffer(),
-                            (MLNumericArray) mlArray );
+                    tag.readToByteBuffer( ((MLNumericArray<?>) mlArray).getImaginaryByteBuffer(),
+                            (MLNumericArray<?>) mlArray );
                 }
                 break;
             case MLArray.mxUINT64_CLASS:
                 mlArray = new MLUInt64(name, dims, type, attributes);
                 //read real
                 tag = new ISMatTag(buf);
-                tag.readToByteBuffer( ((MLNumericArray) mlArray).getRealByteBuffer(),
-                                            (MLNumericArray) mlArray );
+                tag.readToByteBuffer( ((MLNumericArray<?>) mlArray).getRealByteBuffer(),
+                                            (MLNumericArray<?>) mlArray );
                 //read complex
                 if ( mlArray.isComplex() )
                 {
                     tag = new ISMatTag(buf);
-                    tag.readToByteBuffer( ((MLNumericArray) mlArray).getImaginaryByteBuffer(),
-                            (MLNumericArray) mlArray );
+                    tag.readToByteBuffer( ((MLNumericArray<?>) mlArray).getImaginaryByteBuffer(),
+                            (MLNumericArray<?>) mlArray );
                 }
                 break;
             case MLArray.mxCHAR_CLASS:
@@ -778,7 +913,7 @@ public class MatFileReader
             }
             padding = getPadding(size, compressed);
         } 
-        public void readToByteBuffer( ByteBuffer buff, ByteStorageSupport storage ) throws IOException
+        public void readToByteBuffer( ByteBuffer buff, ByteStorageSupport<?> storage ) throws IOException
         {
             MatFileInputStream mfis = new MatFileInputStream( buf, type );
             int elements = size/sizeOf();

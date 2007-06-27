@@ -28,7 +28,7 @@
 		<property name="dev.native" location="${dev.dir}\native"/>
 		<property name="dev.test" location="${dev.dir}\test"/>
 
-		<property name="build.dir" location="C:\work\build\JMatIO"/>
+		<property name="build.dir" location="C:\devel\build\JMatIO"/>
 		<property name="build.src" location="${build.dir}\src"/>
 		<property name="build.bin" location="${build.dir}\bin"/>
 		<property name="build.extern" location="${build.dir}\extern"/>

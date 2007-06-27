@@ -359,4 +359,10 @@ public class MLArray
     {
         return "content cannot be displayed";
     }
+    
+    public void dispose()
+    {
+        
+    }
+    
 }
