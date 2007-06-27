@@ -124,7 +124,7 @@ public class MatIOTest
         reader = new MatFileReader("cellcopy.mat");
         MLArray mlArrayRetrieved = reader.getMLArray( "cel" );
         
-        //assertEquals(mlArray, mlArrayRetrieved);
+        //assertEquals( ((MLCell)mlArray).get(0), ((MLCell)mlArrayRetrieved).get(0));
     }
 
     /**
@@ -790,11 +790,28 @@ public class MatIOTest
         
         assertTrue("Test if file was created", f.exists() );
         
+        MLArray array = null;
+        
         //try to read it
         MatFileReader reader = new MatFileReader();
+        reader.read(f, MatFileReader.MEMORY_MAPPED_FILE );
+        array = reader.getMLArray("m1");
+        assertEquals("Test if is correct file", array, m1);
+        
+        //try to delete the file
+        assertTrue("Test if file can be deleted", f.delete() );
+        
+        writer.write(fileName, list);
+        
+        assertTrue("Test if file was created", f.exists() );
+        reader.read(f, MatFileReader.MEMORY_MAPPED_FILE );
+        assertEquals("Test if is correct file", reader.getMLArray("m1"), m1);
+
+        
+        //try the same with direct buffer allocation
         reader.read(f, MatFileReader.DIRECT_BYTE_BUFFER );
-        //MLArray array = reader.getMLArray("m1");
-        //assertEquals("Test if is correct file", array, m1);
+        array = reader.getMLArray("m1");
+        assertEquals("Test if is correct file", array, m1);
         
         //try to delete the file
         assertTrue("Test if file can be deleted", f.delete() );
@@ -803,6 +820,20 @@ public class MatIOTest
         
         assertTrue("Test if file was created", f.exists() );
         reader.read(f, MatFileReader.DIRECT_BYTE_BUFFER );
+        assertEquals("Test if is correct file", reader.getMLArray("m1"), m1);
+        
+        //try the same with direct buffer allocation
+        reader.read(f, MatFileReader.HEAP_BYTE_BUFFER);
+        array = reader.getMLArray("m1");
+        assertEquals("Test if is correct file", array, m1);
+        
+        //try to delete the file
+        assertTrue("Test if file can be deleted", f.delete() );
+        
+        writer.write(fileName, list);
+        
+        assertTrue("Test if file was created", f.exists() );
+        reader.read(f, MatFileReader.HEAP_BYTE_BUFFER );
         assertEquals("Test if is correct file", reader.getMLArray("m1"), m1);
         
     }

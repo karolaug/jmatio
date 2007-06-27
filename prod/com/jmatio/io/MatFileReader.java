@@ -3,16 +3,16 @@ package com.jmatio.io;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -57,9 +57,9 @@ import com.jmatio.types.MLUInt8;
  */
 public class MatFileReader
 {
-    public static final int MEMORY_MAPPED_FILE = 0;
-    public static final int DIRECT_BYTE_BUFFER = 1;
-    public static final int HEAP_BYTE_BUFFER   = 2;
+    public static final int MEMORY_MAPPED_FILE = 1;
+    public static final int DIRECT_BYTE_BUFFER = 2;
+    public static final int HEAP_BYTE_BUFFER   = 4;
     
     /**
      * MAT-file header
@@ -161,7 +161,7 @@ public class MatFileReader
      * @throws IOException
      *             if error occurs during file processing
      */
-    public Map<String, MLArray> read(File file) throws IOException
+    public synchronized Map<String, MLArray> read(File file) throws IOException
     {
        return read(file, new MatFileFilter(), MEMORY_MAPPED_FILE);
     }
@@ -179,7 +179,7 @@ public class MatFileReader
      * @throws IOException
      *             if error occurs during file processing
      */
-    public Map<String, MLArray> read(File file, int policy) throws IOException
+    public synchronized Map<String, MLArray> read(File file, int policy) throws IOException
     {
         return read(file, new MatFileFilter(), policy);
     }
@@ -187,8 +187,9 @@ public class MatFileReader
      * Reads the content of a MAT-file and returns the mapped content.
      * <p>
      * Because of java bug <a
-     * href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4715154">#4715154</a>
-     * different allocation modes are available.
+     * href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4724038">#4724038</a>
+     * which disables releasing the memory mapped resource, additional different
+     * allocation modes are available.
      * <ul>
      * <li><code>{@link #MEMORY_MAPPED_FILE}</code> - a memory mapped file</li>
      * <li><code>{@link #DIRECT_BYTE_BUFFER}</code> - a uses
@@ -198,8 +199,8 @@ public class MatFileReader
      * <code>{@link ByteBuffer#allocate(int)}</code> method to read in the
      * file contents</li>
      * </ul>
-     * <i>Note: memory mapped files cannot be re-opened to write neither deleted
-     * until VM stops working and releases mapping</i>
+     * <i>Note: memory mapped file will try to invoke a nasty code to relase
+     * it's resources</i>
      * 
      * @param file
      *            a valid MAT-file file to be read
@@ -208,11 +209,11 @@ public class MatFileReader
      * @param policy
      *            the file memory allocation policy
      * @return the same as <code>{@link #getContent()}</code>
-     * @see {@link MatFileFilter}
+     * @see MatFileFilter
      * @throws IOException
      *             if error occurs during file processing
      */
-    public Map<String, MLArray> read(File file, MatFileFilter filter,
+    public synchronized Map<String, MLArray> read(File file, MatFileFilter filter,
             int policy) throws IOException
     {
         this.filter = filter;
@@ -225,6 +226,7 @@ public class MatFileReader
         
         FileChannel roChannel = null;
         RandomAccessFile raFile = null;
+        ByteBuffer buf = null;
         try
         {
             //Create a read-only memory-mapped file
@@ -234,7 +236,6 @@ public class MatFileReader
             // The bug disables re-opening the memory mapped files for writing
             // or deleting until the VM stops working. In real life I need to open
             // and update files
-            ByteBuffer buf = null;
             switch ( policy )
             {
                 case DIRECT_BYTE_BUFFER:
@@ -272,16 +273,74 @@ public class MatFileReader
         {
             if ( roChannel != null )
             {
-                //close file channel
                 roChannel.close();
             }
             if ( raFile != null )
             {
                 raFile.close();
             }
+            if ( buf != null && (policy == MEMORY_MAPPED_FILE || policy == DIRECT_BYTE_BUFFER) )
+            {
+                try
+                {
+                    clean(buf);
+                }
+                catch (Exception e)
+                {
+                    //swallow the defeat gracefully
+                }
+            }
+            buf = null;
         }
         
     }
+    
+    /**
+     * Workaround taken from bug <a
+     * href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4724038">#4724038</a>
+     * to release the memory mapped byte buffer.
+     * <p>
+     * Little quote from SUN: <i>This is highly inadvisable, to put it mildly.
+     * It is exceedingly dangerous to forcibly unmap a mapped byte buffer that's
+     * visible to Java code. Doing so risks both the security and stability of
+     * the system</i>
+     * <p>
+     * Since the memory byte buffer used to map the file is not exposed to the
+     * outside world, maybe it's save to use it without being cursed by the SUN.
+     * Since there is no other solution this will do (don't trust voodoo GC
+     * invocation)
+     * 
+     * @param buffer
+     *            the buffer to be unmapped
+     * @throws Exception
+     *             all kind of evil stuff
+     */
+    private void clean(final Object buffer) throws Exception
+    {
+        AccessController.doPrivileged(new PrivilegedAction<Object>()
+        {
+            public Object run()
+            {
+                try
+                {
+                    Method getCleanerMethod = buffer.getClass().getMethod(
+                            "cleaner", new Class[0]);
+                    getCleanerMethod.setAccessible(true);
+                    sun.misc.Cleaner cleaner = (sun.misc.Cleaner) getCleanerMethod
+                            .invoke(buffer, new Object[0]);
+                    cleaner.clean();
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        });
+    }       
+    
+    
+    
     /**
      * Gets MAT-file header
      * 
