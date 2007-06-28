@@ -2,9 +2,6 @@ package com.jmatio.types;
 
 import java.nio.ByteBuffer;
 
-import com.jmatio.types.MLArray;
-import com.jmatio.types.MLNumericArray;
-
 /**
  * Class represents Int64 (long) array (matrix)
  * 
@@ -148,7 +145,7 @@ public class MLInt64 extends MLNumericArray<Long>
         return Long.SIZE >> 3;
     }
     
-    public Class getStorageClazz()
+    public Class<Long> getStorageClazz()
     {
         return Long.class;
     }

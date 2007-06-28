@@ -306,7 +306,7 @@ public class MLSparse extends MLNumericArray<Double>
         return buff.array();
     }
     
-    public Class getStorageClazz()
+    public Class<Double> getStorageClazz()
     {
         return Double.class;
     }

@@ -144,7 +144,7 @@ public class MLInt8 extends MLNumericArray<Byte>
         return Byte.SIZE >> 3;
     }
     
-    public Class getStorageClazz()
+    public Class<Byte> getStorageClazz()
     {
         return Byte.class;
     }

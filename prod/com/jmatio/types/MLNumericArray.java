@@ -326,11 +326,11 @@ public abstract class MLNumericArray<T extends Number> extends MLArray
     {
         if ( o instanceof  MLNumericArray )
         {
-            boolean result = directByteBufferEquals(real, ((MLNumericArray)o).real )
-                                   && Arrays.equals( dims, ((MLNumericArray)o).dims );
+            boolean result = directByteBufferEquals(real, ((MLNumericArray<?>)o).real )
+                                   && Arrays.equals( dims, ((MLNumericArray<?>)o).dims );
             if ( isComplex() && result )
             {
-                result &= directByteBufferEquals(imaginary, ((MLNumericArray)o).imaginary );
+                result &= directByteBufferEquals(imaginary, ((MLNumericArray<?>)o).imaginary );
             }
             return result;
         }

@@ -1,6 +1,5 @@
 package com.jmatio.types;
 
-import java.io.DataInputStream;
 import java.nio.ByteBuffer;
 
 /**
@@ -154,7 +153,7 @@ public class MLDouble extends MLNumericArray<Double>
         return buff.array();
     }
     
-    public Class getStorageClazz()
+    public Class<Double> getStorageClazz()
     {
         return Double.class;
     }
