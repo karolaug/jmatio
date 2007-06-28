@@ -7,9 +7,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -227,6 +229,7 @@ public class MatFileReader
         FileChannel roChannel = null;
         RandomAccessFile raFile = null;
         ByteBuffer buf = null;
+        WeakReference<MappedByteBuffer> bufferWeakRef = null;
         try
         {
             //Create a read-only memory-mapped file
@@ -250,11 +253,11 @@ public class MatFileReader
                     break;
                 case MEMORY_MAPPED_FILE:
                     buf = roChannel.map(FileChannel.MapMode.READ_ONLY, 0, (int)roChannel.size());        
+                    bufferWeakRef = new WeakReference<MappedByteBuffer>((MappedByteBuffer)buf);            
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown file allocation policy");
             }
-            
             //read in file header
             readHeader(buf);
             
@@ -279,18 +282,29 @@ public class MatFileReader
             {
                 raFile.close();
             }
-            if ( buf != null && (policy == MEMORY_MAPPED_FILE || policy == DIRECT_BYTE_BUFFER) )
+            if ( buf != null && bufferWeakRef != null && policy == MEMORY_MAPPED_FILE )
             {
                 try
                 {
                     clean(buf);
                 }
-                catch (Exception e)
+                catch ( Exception e )
                 {
-                    //swallow the defeat gracefully
+                    int GC_TIMEOUT_MS = 1000;
+                    buf = null;
+                    long start = System.currentTimeMillis();
+                    while (bufferWeakRef.get() != null) 
+                    {
+                        if (System.currentTimeMillis() - start > GC_TIMEOUT_MS)
+                        {
+                            break; //a hell cannot be unmapped - hopefully GC will
+                                   //do it's job later
+                        }
+                        System.gc();
+                        Thread.yield();
+                    }
                 }
             }
-            buf = null;
         }
         
     }
