@@ -6,6 +6,9 @@ import junit.framework.JUnit4TestAdapter;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -79,7 +82,7 @@ public class MatIOTest
     {
         final String fileName = "bigbyte.mat";
         final String name = "bigbyte";
-        final int SIZE = 1000;    
+        final int SIZE = 1024;    
         
         
         MLUInt8 mluint8 = new MLUInt8( name, new int[] { SIZE, SIZE } );
@@ -98,15 +101,13 @@ public class MatIOTest
         final long start = System.nanoTime();
         for ( int i = 0; i < mlArrayRetrived.getSize(); i++ )
         {
-            ((MLNumericArray)mlArrayRetrived).get(i);
+            ((MLNumericArray<?>)mlArrayRetrived).get(i);
         }
         final long stop = System.nanoTime();
         System.out.println("--> " + (stop - start)/1e6 +  "[ns]");
-        
-        
+               
         //test if MLArray objects are equal
         assertEquals("Test if value red from file equals value stored", mluint8, mlArrayRetrived);
-        
     }
     
     @Test 

@@ -36,10 +36,10 @@ public abstract class MLNumericArray<T extends Number> extends MLArray
     {
         super(name, dims, type, attributes);
         
-        real = ByteBuffer.allocateDirect( getSize()*getBytesAllocated());
+        real = ByteBuffer.allocate( getSize()*getBytesAllocated());
         if ( isComplex() )
         {
-            imaginary = ByteBuffer.allocateDirect( getSize()*getBytesAllocated());
+            imaginary = ByteBuffer.allocate( getSize()*getBytesAllocated());
         }
         bytes = new byte[ getBytesAllocated() ];
     }

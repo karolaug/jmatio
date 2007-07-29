@@ -215,6 +215,7 @@ public class MatFileReader
      * @throws IOException
      *             if error occurs during file processing
      */
+    private static final int DIRECT_BUFFER_LIMIT = 1 << 25;
     public synchronized Map<String, MLArray> read(File file, MatFileFilter filter,
             int policy) throws IOException
     {
@@ -247,8 +248,33 @@ public class MatFileReader
                     buf.rewind();
                     break;
                 case HEAP_BYTE_BUFFER:
-                    buf = ByteBuffer.allocate( (int)roChannel.size() );
+                    int filesize = (int)roChannel.size();
+                    System.gc();
+                    buf = ByteBuffer.allocate( filesize );
+
+                    // The following two methods couldn't be used (at least under MS Windows)
+                    // since they are implemented in a suboptimal way. Each of them
+                    // allocates its own _direct_ buffer of exactly the same size,
+                    // the buffer passed as parameter has, reads data into it and
+                    // only afterwards moves data into the buffer passed as parameter.
+                    // roChannel.read(buf, 0);        // ends up in outOfMemory
+                    // raFile.readFully(buf.array()); // ends up in outOfMemory
+
+                    int numberOfCompleteBlocks = filesize / DIRECT_BUFFER_LIMIT;
+                    int partialBlockSize = filesize % DIRECT_BUFFER_LIMIT;
+                    if (numberOfCompleteBlocks + (partialBlockSize>0 ? 1 : 0) > 1) {
+                        ByteBuffer tempByteBuffer = ByteBuffer.allocate(DIRECT_BUFFER_LIMIT);
+                        for (int block=0; block<numberOfCompleteBlocks; block++) {
+                            roChannel.read(tempByteBuffer, block*DIRECT_BUFFER_LIMIT);
+                            buf.put(tempByteBuffer.array());
+                            tempByteBuffer.rewind();
+                        }
+                        roChannel.read(tempByteBuffer, numberOfCompleteBlocks*DIRECT_BUFFER_LIMIT);
+                        buf.put(tempByteBuffer.array(), 0, partialBlockSize);
+                        tempByteBuffer = null;
+                    } else
                     roChannel.read(buf, 0);
+
                     buf.rewind();
                     break;
                 case MEMORY_MAPPED_FILE:
@@ -400,33 +426,29 @@ public class MatFileReader
         return data;
     }
     
+    private static class _ByteArrayOutputStream extends ByteArrayOutputStream {
+        _ByteArrayOutputStream() {
+            super();
+        }
     
-    /**
-     * Decompresses (inflates) bytes from input stream.
-     * 
-     * Stream marker is being set at +<code>numOfBytes</code> position of the
-     * stream.
-     * 
-     * @param is -
-     *            input byte buffer
-     * @param numOfBytes -
-     *            number of bytes to be red
-     * @return - new <code>ByteBuffer</code> with inflated block of data
-     * @throws IOException
-     *             when error occurs while reading or inflating the buffer .
-     */
-    private ByteBuffer inflate(final ByteBuffer buf, final int numOfBytes) throws IOException
-    {
-        if ( buf.remaining() < numOfBytes )
-        {
-            throw new MatlabIOException("Compressed buffer length miscalculated!");
+        _ByteArrayOutputStream(int initialSize) {
+            super(initialSize);
         }
         
-        //instead of standard Inlater class instance I use an inflater input
-        //stream... gives a great boost to the performance
-        InflaterInputStream iis = new InflaterInputStream( new InputStream() {
+        byte[] getReferenceToByteArray() {
+            return this.buf;
+        }
+    }
 
-            int limit = numOfBytes;
+    private static class _InputStreamFromBuffer extends InputStream {
+        private ByteBuffer buf;
+        private int limit;
+
+        public _InputStreamFromBuffer(final ByteBuffer buf, final int limit) {
+            this.buf = buf;
+            this.limit = limit;
+        }
+
             @Override
             public synchronized int read() throws IOException
             {
@@ -444,11 +466,34 @@ public class MatFileReader
                 limit -= len;
                 return len;
             }        
-        });
+    }
+
+    /**
+     * Decompresses (inflates) bytes from input stream. Stream marker is being set at +<code>numOfBytes</code>
+     * position of the stream.
+     *
+     * @param is -
+     *            input byte buffer
+     * @param numOfBytes -
+     *            number of bytes to be red
+     * @return - new <code>ByteBuffer</code> with inflated block of data
+     * @throws IOException
+     *             when error occurs while reading or inflating the buffer .
+     */
+    private ByteBuffer inflate(final ByteBuffer buf, final int numOfBytes) throws IOException
+    {
+        if ( buf.remaining() < numOfBytes )
+        {
+            throw new MatlabIOException("Compressed buffer length miscalculated!");
+        }
+
+        //instead of standard Inlater class instance I use an inflater input
+        //stream... gives a great boost to the performance
+        InflaterInputStream iis = new InflaterInputStream(new _InputStreamFromBuffer(buf, numOfBytes));
         
         //process data decompression
         byte[] result = new byte[128];
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        _ByteArrayOutputStream baos = new _ByteArrayOutputStream(numOfBytes);
         int i;
         try
         {
@@ -469,7 +514,7 @@ public class MatFileReader
             iis.close();
         }
         //create a ByteBuffer from the deflated data
-        ByteBuffer out = ByteBuffer.wrap( baos.toByteArray() );
+        ByteBuffer out = ByteBuffer.wrap( baos.getReferenceToByteArray() );
         //with proper byte ordering
         out.order( byteOrder );
         return out;
@@ -958,7 +1003,7 @@ public class MatFileReader
      * 
      * @author Wojciech Gradkowski (<a href="mailto:wgradkowski@gmail.com">wgradkowski@gmail.com</a>)
      */
-    private class ISMatTag extends MatTag
+    private static class ISMatTag extends MatTag
     {
         public ByteBuffer buf;
         private int padding;
