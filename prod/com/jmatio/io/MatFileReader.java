@@ -259,18 +259,15 @@ public class MatFileReader
                     // only afterwards moves data into the buffer passed as parameter.
                     // roChannel.read(buf, 0);        // ends up in outOfMemory
                     // raFile.readFully(buf.array()); // ends up in outOfMemory
-
-                    int numberOfCompleteBlocks = filesize / DIRECT_BUFFER_LIMIT;
-                    int partialBlockSize = filesize % DIRECT_BUFFER_LIMIT;
-                    if (numberOfCompleteBlocks + (partialBlockSize>0 ? 1 : 0) > 1) {
-                        ByteBuffer tempByteBuffer = ByteBuffer.allocate(DIRECT_BUFFER_LIMIT);
-                        for (int block=0; block<numberOfCompleteBlocks; block++) {
+                    int numberOfBlocks = filesize / DIRECT_BUFFER_LIMIT + ((filesize % DIRECT_BUFFER_LIMIT) > 0 ? 1 : 0);
+                    if (numberOfBlocks > 1) {
+                        ByteBuffer tempByteBuffer = ByteBuffer.allocateDirect(DIRECT_BUFFER_LIMIT);
+                        for (int block=0; block<numberOfBlocks; block++) {
+                            tempByteBuffer.clear();
                             roChannel.read(tempByteBuffer, block*DIRECT_BUFFER_LIMIT);
-                            buf.put(tempByteBuffer.array());
-                            tempByteBuffer.rewind();
+                            tempByteBuffer.flip();
+                            buf.put(tempByteBuffer);
                         }
-                        roChannel.read(tempByteBuffer, numberOfCompleteBlocks*DIRECT_BUFFER_LIMIT);
-                        buf.put(tempByteBuffer.array(), 0, partialBlockSize);
                         tempByteBuffer = null;
                     } else
                     roChannel.read(buf, 0);
@@ -514,7 +511,7 @@ public class MatFileReader
             iis.close();
         }
         //create a ByteBuffer from the deflated data
-        ByteBuffer out = ByteBuffer.wrap( baos.getReferenceToByteArray() );
+        ByteBuffer out = ByteBuffer.wrap( baos.getReferenceToByteArray(), 0, baos.size() );
         //with proper byte ordering
         out.order( byteOrder );
         return out;
