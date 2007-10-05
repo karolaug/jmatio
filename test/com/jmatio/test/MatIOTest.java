@@ -1,18 +1,18 @@
 package com.jmatio.test;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
-import junit.framework.JUnit4TestAdapter;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import junit.framework.JUnit4TestAdapter;
+
+import org.junit.Test;
 
 import com.jmatio.io.MatFileFilter;
 import com.jmatio.io.MatFileReader;
@@ -24,6 +24,7 @@ import com.jmatio.types.MLDouble;
 import com.jmatio.types.MLInt64;
 import com.jmatio.types.MLInt8;
 import com.jmatio.types.MLNumericArray;
+import com.jmatio.types.MLSparse;
 import com.jmatio.types.MLStructure;
 import com.jmatio.types.MLUInt64;
 import com.jmatio.types.MLUInt8;
@@ -430,6 +431,64 @@ public class MatIOTest
         MLArray mlMLUInt82D = new MLUInt8(name, src2D );
         //compare it with original
         assertEquals( "Test if double[][] constructor produces the same matrix as normal one", mlMLUInt82D, mluint8 );
+    }
+    
+    /**
+     * Tests <code>MLSparse</code> reading and writing.
+     * 
+     * @throws IOException
+     */
+    @Test public void testMLSparse() throws IOException
+    {
+        //array name
+        String name = "sparsearr";
+        //file name in which array will be storred
+        String fileName = "mlsparse.mat";
+
+        //test 2D array coresponding to test vector
+        double[][] referenceReal = new double[][] { { 1.3, 4.0 },
+                { 2.0, 0.0 },
+                { 0.0, 0.0 }
+            };
+        double[][] referenceImaginary = new double[][] { { 0.0, 0.0 },
+                { 2.0, 0.0 },
+                { 0.0, 6.0 }
+            };
+
+        MLSparse mlSparse = new MLSparse(name, new int[] {3, 2}, MLArray.mtFLAG_COMPLEX, 5);
+        mlSparse.setReal(1.3, 0, 0);
+        mlSparse.setReal(4.0, 0, 1);
+        mlSparse.setReal(2.0, 1, 0);
+        mlSparse.setImaginary(2.0, 1, 0);
+        mlSparse.setImaginary(6.0, 2, 1);
+        
+        //write array to file
+        ArrayList<MLArray> list = new ArrayList<MLArray>();
+        list.add( mlSparse );
+        
+        //write arrays to file
+        new MatFileWriter( fileName, list );
+        
+        //read array form file
+        MatFileReader mfr = new MatFileReader( fileName );
+        MLArray mlArrayRetrived = mfr.getMLArray( name );
+        
+        //test if MLArray objects are equal
+        assertEquals("Test if value red from file equals value stored", mlSparse, mlArrayRetrived);
+        
+        //test if 2D array match
+        for ( int i = 0; i < referenceReal.length; i++ )
+        {
+            for (int j = 0; j < referenceReal[i].length; j++) {
+                assertEquals( "2D array mismatch (real)", referenceReal[i][j], ((MLSparse)mlArrayRetrived).getReal(i,j));
+            }
+        }
+        for ( int i = 0; i < referenceImaginary.length; i++ )
+        {
+            for (int j = 0; j < referenceImaginary[i].length; j++) {
+                assertEquals( "2D array mismatch (imaginary)", referenceImaginary[i][j], ((MLSparse)mlArrayRetrived).getImaginary(i,j));
+            }
+        }
     }
     
     /**

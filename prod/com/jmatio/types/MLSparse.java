@@ -1,17 +1,17 @@
 package com.jmatio.types;
 
 import java.nio.ByteBuffer;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class MLSparse extends MLNumericArray<Double>
 {
     int nzmax;
-    private Set<IndexMN> indexSet;
-    private Map<IndexMN, Double> real;  
-    private Map<IndexMN, Double> imaginary;  
+    private SortedSet<IndexMN> indexSet;
+    private SortedMap<IndexMN, Double> real;  
+    private SortedMap<IndexMN, Double> imaginary;  
     
     /**
      * @param name
@@ -23,9 +23,9 @@ public class MLSparse extends MLNumericArray<Double>
     {
         super(name, dims, MLArray.mxSPARSE_CLASS, attributes);
         this.nzmax = nzmax;
-        real = new LinkedHashMap<IndexMN, Double>();
-        imaginary = new LinkedHashMap<IndexMN, Double>();
-        indexSet = new LinkedHashSet<IndexMN>();
+        real = new TreeMap<IndexMN, Double>();
+        imaginary = new TreeMap<IndexMN, Double>();
+        indexSet = new TreeSet<IndexMN>();
     }
     
     /**
@@ -54,7 +54,7 @@ public class MLSparse extends MLNumericArray<Double>
         return ir;
     }
     /**
-     * Gets collumn indices. 
+     * Gets column indices. 
      * 
      * <tt>jc</tt> points to an integer array of length N+1 that contains column index information.
      * For j, in the range <tt>0&lt;=j&lt;=N–1</tt>, <tt>jc[j]</tt> is the index in ir and <tt>pr</tt> (and <tt>pi</tt>
@@ -68,28 +68,14 @@ public class MLSparse extends MLNumericArray<Double>
     public int[] getJC()
     {
         int[] jc = new int[getN()+1];
-        
-        //create tmp array of nnz column indices
-        int[] tmp = new int[nzmax];
-        int i = 0;
+        // jc[j] is the number of nonzero elements in all preceeding columns
         for ( IndexMN index : indexSet )
         {
-            tmp[i++] = index.n;
-        }
-        
-        //create jc
-        int c = 0;
-        for ( int k = 0; k < jc.length - 1; k++ )
-        {
-            if ( k < tmp.length )
+            for (int column = index.n + 1; column < jc.length; column++)
             {
-                c = tmp[k];
+                jc[column]++;
             }
-            jc[k] = c;
         }
-        //last one is nzmax
-        jc[jc.length-1] = nzmax;
-        
         return jc;
     }
     
@@ -150,7 +136,7 @@ public class MLSparse extends MLNumericArray<Double>
     {
         IndexMN i = new IndexMN(m,n);
         indexSet.add(i);
-        imaginary.put(new IndexMN(m,n), value );
+        imaginary.put(i, value );
     }
     /**
      * @param value
@@ -181,30 +167,43 @@ public class MLSparse extends MLNumericArray<Double>
         throw new IllegalArgumentException("Can't get Sparse array elements by index. " +
         "Please use getImaginary(int index) instead.");
     }
-    /* (non-Javadoc)
-     * @see com.paradigmdesigner.matlab.types.MLNumericArray#exportReal()
+    
+    /**
+     * Returns the real part (PR) array. PR has length number-of-nonzero-values.
+     *
+     * @return real part
      */
     public Double[] exportReal()
     {
-        Double[] ad = new Double[nzmax];
+        Double[] ad = new Double[indexSet.size()];
         int i = 0;
-        for ( Double d : real.values() )
-        {
-            ad[i++] = d;
+        for (IndexMN index: indexSet) {
+            if (real.containsKey(index)) {
+                ad[i] = real.get(index);
+            } else {
+                ad[i] = 0.0;
+            }
+            i++;
         }
         return ad;
-        
     }
-    /* (non-Javadoc)
-     * @see com.paradigmdesigner.matlab.types.MLNumericArray#exportImaginary()
+    
+    /**
+     * Returns the imaginary part (PI) array. PI has length number-of-nonzero-values.
+     *
+     * @return
      */
     public Double[] exportImaginary()
     {
-        Double[] ad = new Double[nzmax];
+        Double[] ad = new Double[indexSet.size()];
         int i = 0;
-        for ( Double d : imaginary.values() )
-        {
-            ad[i++] = d;
+        for (IndexMN index: indexSet) {
+            if (imaginary.containsKey(index)) {
+                ad[i] = imaginary.get(index);
+            } else {
+                ad[i] = 0.0;
+            }
+            i++;
         }
         return ad;
     }
@@ -238,7 +237,7 @@ public class MLSparse extends MLNumericArray<Double>
      * 
      * @author Wojciech Gradkowski <wgradkowski@gmail.com>
      */
-    private class IndexMN
+    private class IndexMN implements Comparable<IndexMN>
     {
         int m;
         int n;
@@ -248,15 +247,15 @@ public class MLSparse extends MLNumericArray<Double>
             this.m = m;
             this.n = n;
         }
+        
+        
         /* (non-Javadoc)
-         * @see java.lang.Object#hashCode()
+         * @see java.lang.Comparable#compareTo(java.lang.Object)
          */
-        public int hashCode()
-        {
-            long l = Double.doubleToLongBits(m);
-            l ^= Double.doubleToLongBits(n)*31L;
-            return (int) l^(int) (l >> 32);
+        public int compareTo(IndexMN anOtherIndex) {
+            return getIndex(m,n) - getIndex(anOtherIndex.m,anOtherIndex.n);
         }
+
         /* (non-Javadoc)
          * @see java.lang.Object#equals(java.lang.Object)
          */

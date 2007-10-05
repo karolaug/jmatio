@@ -768,21 +768,19 @@ public class MatFileReader
                 //read ir (row indices)
                 tag = new ISMatTag(buf);
                 int[] ir = tag.readToIntArray();
-                //read jc (column indices)
+                //read jc (column count)
                 tag = new ISMatTag(buf);
                 int[] jc = tag.readToIntArray();
                 
                 //read pr (real part)
                 tag = new ISMatTag(buf);
                 double[] ad1 = tag.readToDoubleArray();
-                int n = 0;
-                for ( int i = 0; i < ir.length; i++)
-                {
-                    if ( i < sparse.getN() )
-                    {
-                        n = jc[i];
+                int count = 0;
+                for (int column = 0; column < sparse.getN(); column++) {
+                    while(count < jc[column+1]) {
+                        sparse.setReal(ad1[count], ir[count], column);
+                        count++;
                     }
-                    sparse.setReal(ad1[i], ir[i], n);
                 }
                 
                 //read pi (imaginary part)
@@ -791,15 +789,12 @@ public class MatFileReader
                     tag = new ISMatTag(buf);
                     double[] ad2 = tag.readToDoubleArray();
                     
-                    //TODO: check if I should throw MatlabIOException
-                    int n1 = 0;
-                    for ( int i = 0; i < ir.length; i++)
-                    {
-                        if ( i < sparse.getN() )
-                        {
-                            n1 = jc[i];
+                    count = 0;
+                    for (int column = 0; column < sparse.getN(); column++) {
+                        while(count < jc[column+1]) {
+                            sparse.setImaginary(ad2[count], ir[count], column);
+                            count++;
                         }
-                        sparse.setImaginary(ad2[i], ir[i], n1);
                     }
                 }
                 mlArray = sparse;
