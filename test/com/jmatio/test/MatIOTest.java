@@ -909,13 +909,13 @@ public class MatIOTest
      * @throws IOException
      */
     @Test
-    public void testJuliensFile() throws IOException
+    public void testBigSparseFile() throws IOException
     {
         //read array form file
         MatFileReader mfr = new MatFileReader();
         //reader crashes on reading this file
         //bug caused by sparse array allocation
-        mfr.read( new File("test/metadata.mat"), MatFileReader.DIRECT_BYTE_BUFFER );
+        mfr.read( new File("test/bigsparse.mat"), MatFileReader.DIRECT_BYTE_BUFFER );
         
     }    
     

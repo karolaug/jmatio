@@ -23,7 +23,6 @@ public class MLSparse extends MLNumericArray<Double>
     {
         super(name, dims, MLArray.mxSPARSE_CLASS, attributes);
         this.nzmax = nzmax;
-        allocate();
     }
     
     protected void allocate()
