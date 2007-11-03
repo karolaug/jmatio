@@ -19,6 +19,11 @@ Have fun :)
 Wojciech Gradkowski
 
 CHANGE LOG:
+[05.10.2007]
++ Sparse matrix bugfixes by Jonas Pettersson (LU/EAB)
++ MatFileReader performance enhancements by Eugene Rudoy
++ new MatFileReader methods added
+
 [02.03.2007]
 + Regression bug fixed: Double arrays created natively in Matlab are read 
   incorrectly (reversed byte ordering)

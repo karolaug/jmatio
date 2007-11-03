@@ -22,7 +22,7 @@ public abstract class MLNumericArray<T extends Number> extends MLArray
     private ByteBuffer real;
     private ByteBuffer imaginary;
     /** The buffer for creating Number from bytes */
-    private final byte[] bytes;
+    private byte[] bytes;
     
     /**
      * Normally this constructor is used only by MatFileReader and MatFileWriter
@@ -35,7 +35,12 @@ public abstract class MLNumericArray<T extends Number> extends MLArray
     public MLNumericArray(String name, int[] dims, int type, int attributes)
     {
         super(name, dims, type, attributes);
+        allocate();
         
+    }
+    
+    protected void allocate( )
+    {
         real = ByteBuffer.allocate( getSize()*getBytesAllocated());
         if ( isComplex() )
         {
@@ -43,6 +48,8 @@ public abstract class MLNumericArray<T extends Number> extends MLArray
         }
         bytes = new byte[ getBytesAllocated() ];
     }
+    
+    
     /**
      * <a href="http://math.nist.gov/javanumerics/jama/">Jama</a> [math.nist.gov] style: 
      * construct a 2D real matrix from a one-dimensional packed array

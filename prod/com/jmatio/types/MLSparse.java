@@ -23,8 +23,16 @@ public class MLSparse extends MLNumericArray<Double>
     {
         super(name, dims, MLArray.mxSPARSE_CLASS, attributes);
         this.nzmax = nzmax;
+        allocate();
+    }
+    
+    protected void allocate()
+    {
         real = new TreeMap<IndexMN, Double>();
-        imaginary = new TreeMap<IndexMN, Double>();
+        if ( isComplex() )
+        {
+            imaginary = new TreeMap<IndexMN, Double>();
+        }
         indexSet = new TreeSet<IndexMN>();
     }
     

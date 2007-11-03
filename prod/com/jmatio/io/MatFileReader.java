@@ -16,6 +16,7 @@ import java.nio.channels.FileChannel;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.zip.InflaterInputStream;
@@ -764,7 +765,6 @@ public class MatFileReader
                 break;
             case MLArray.mxSPARSE_CLASS:
                 MLSparse sparse = new MLSparse(name, dims, attributes, nzmax);
-                
                 //read ir (row indices)
                 tag = new ISMatTag(buf);
                 int[] ir = tag.readToIntArray();

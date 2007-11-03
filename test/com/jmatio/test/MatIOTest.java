@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -898,5 +899,24 @@ public class MatIOTest
         
     }
     
+    /**
+     * Test case that exposes the bug found by Julien C. from polymtl.ca
+     * <p>
+     * The test file contains a sparse array on crashes the reader. The bug
+     * appeared when the {@link MLSparse} tried to allocate resources (very very
+     * big {@link ByteBuffer}) and {@link IllegalArgumentException} was thrown.
+     * 
+     * @throws IOException
+     */
+    @Test
+    public void testJuliensFile() throws IOException
+    {
+        //read array form file
+        MatFileReader mfr = new MatFileReader();
+        //reader crashes on reading this file
+        //bug caused by sparse array allocation
+        mfr.read( new File("test/metadata.mat"), MatFileReader.DIRECT_BYTE_BUFFER );
+        
+    }    
     
 }
