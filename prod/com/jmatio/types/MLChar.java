@@ -10,6 +10,25 @@ public class MLChar extends MLArray implements GenericArrayCreator<Character>
         this( name, new int[] { 1, value.length() } , MLArray.mxCHAR_CLASS, 0);
         set(value);
     }
+    /**
+     * Added method to allow initialization of a char array representing 
+     * an array of strings.
+     * 
+     * @param name
+     * @param values
+     * @param maxlen
+     */
+    public MLChar(String name, String[] values, int maxlen)
+    {
+    	this( name, new int[] { values.length, maxlen }, MLArray.mxCHAR_CLASS, 0 );
+    	int idx = 0;
+    	for (String v : values)
+    	{
+    		set(v, idx);
+    		idx++;
+    	}
+    }
+    
     public MLChar(String name, int[] dims, int type, int attributes)
     {
         super(name, dims, type, attributes);
@@ -30,6 +49,29 @@ public class MLChar extends MLArray implements GenericArrayCreator<Character>
         for ( int i = 0; i < getN() &&  i < value.length(); i++ )
         {
             setChar(cha[i], i);
+        }
+    }
+    
+    /** 
+     * Set one row, specifying the row.
+     * 
+     * @param value
+     * @param idx
+     */
+    public void set(String value, int idx)
+    {
+        char[] cha = value.toCharArray();
+        int rowOffset = getM();
+        for ( int i = 0; i < getN(); i++ )
+        {
+        	if ( i < value.length())
+        	{
+        		setChar(cha[i], idx + (rowOffset * i));
+        	}
+        	else 
+        	{
+        		setChar(' ',  idx + (rowOffset * i));
+        	}
         }
     }
     
