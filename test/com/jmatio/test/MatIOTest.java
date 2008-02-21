@@ -1,7 +1,7 @@
 package com.jmatio.test;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,6 +16,7 @@ import junit.framework.JUnit4TestAdapter;
 import org.junit.Test;
 
 import com.jmatio.io.MatFileFilter;
+import com.jmatio.io.MatFileIncrementalWriter;
 import com.jmatio.io.MatFileReader;
 import com.jmatio.io.MatFileWriter;
 import com.jmatio.types.MLArray;
@@ -615,6 +616,51 @@ public class MatIOTest
         new MatFileWriter( fileName, list );
         
         //read array form file
+        MatFileReader mfr = new MatFileReader( fileName );
+        
+        //test if MLArray objects are equal
+        assertEquals("Test if value red from file equals value stored", m1, mfr.getMLArray( "m1" ));
+        assertEquals("Test if value red from file equals value stored", m2, mfr.getMLArray( "m2" ));
+        assertEquals("Test if value red from file equals value stored", m3, mfr.getMLArray( "m3" ));
+    }
+    
+    
+    /**
+     * Regression bug: Test writing several arrays into a single file.
+     * 
+     * @throws IOException
+     */
+    @Test 
+    public void testIncrementalWrite() throws IOException
+    {
+        final String fileName = "multi.mat";
+
+        //test column-packed vector
+        double[] src = new double[] { 1.3, 2.0, 3.0, 4.0, 5.0, 6.0 };
+        double[] src2 = new double[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
+        double[] src3 = new double[] { 3.1415 };
+
+        //create 3x2 double matrix
+        //[ 1.0 4.0 ;
+        //  2.0 5.0 ;
+        //  3.0 6.0 ]
+        MLDouble m1 = new MLDouble( "m1", src, 3 );
+        MLDouble m2= new MLDouble( "m2", src2, 3 );
+        MLDouble m3 = new MLDouble( "m3", src3, 1 );
+        //write array to file
+        ArrayList<MLArray> list = new ArrayList<MLArray>();
+        list.add( m1);
+        list.add( m2);
+        list.add( m3);
+        
+        //write arrays to file
+        MatFileIncrementalWriter writer = new MatFileIncrementalWriter( fileName );
+        writer.write(m1);
+        writer.write(m2);
+        writer.write(m3);
+        writer.close();
+        
+        //read array from file
         MatFileReader mfr = new MatFileReader( fileName );
         
         //test if MLArray objects are equal
