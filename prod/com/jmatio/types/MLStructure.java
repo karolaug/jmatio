@@ -151,6 +151,19 @@ public class MLStructure extends MLArray
         return fields;
     }
     /**
+     * Returns the {@link Collection} of keys for this structure.
+     * @return the {@link Collection} of keys for this structure
+     */
+    public Collection<String> getFieldNames()
+    {
+        Set<String> fieldNames = new LinkedHashSet<String> ();
+        
+        fieldNames.addAll( keys );
+        
+        return fieldNames;
+        
+    }
+    /**
      * Gets a value of the field described by name from current structe
      * in struc array.
      * 

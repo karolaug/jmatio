@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -380,6 +381,33 @@ public class MatIOTest
         
     
     }
+
+    @Test
+    public void testMLStructureFieldNames() throws IOException
+    {
+        //test column-packed vector
+        double[] src = new double[] { 1.3, 2.0, 3.0, 4.0, 5.0, 6.0 };
+        
+        //create 3x2 double matrix
+        //[ 1.0 4.0 ;
+        //  2.0 5.0 ;
+        //  3.0 6.0 ]
+        MLDouble mlDouble = new MLDouble( null, src, 3 );
+        MLChar mlChar = new MLChar( null, "I am dummy" );
+        
+        
+        MLStructure mlStruct = new MLStructure("str", new int[] {1,1} );
+        mlStruct.setField("f1", mlDouble);
+        mlStruct.setField("f2", mlChar);
+        
+        Collection<String> fieldNames = mlStruct.getFieldNames();
+        
+        assertEquals( 2, fieldNames.size() );
+        assertTrue( fieldNames.contains("f1") );
+        assertTrue( fieldNames.contains("f2") );
+    }
+    
+    
     
     /**
      * Tests <code>MLUint8</code> reading and writing.
