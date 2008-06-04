@@ -214,11 +214,41 @@ class MatFileInputStream
                     dest.putLong( readLong() );
                     continue;
                 }
+                if ( clazz.equals( Float.class) )
+                {
+                    dest.putFloat( readFloat() );
+                    continue;
+                }
                 throw new RuntimeException("Not supported buffer reader for " + clazz );
             }
         }
         dest.rewind();
         return dest;
+    }
+
+    private float readFloat()
+    {
+        switch ( type )
+        {
+            case MatDataTypes.miUINT8:
+                return (float)( buf.get() & 0xFF);
+            case MatDataTypes.miINT8:
+                return (float) buf.get();
+            case MatDataTypes.miUINT16:
+                return (float)( buf.getShort() & 0xFFFF);
+            case MatDataTypes.miINT16:
+                return (float) buf.getShort();
+            case MatDataTypes.miUINT32:
+                return (float)( buf.getInt() & 0xFFFFFFFF);
+            case MatDataTypes.miINT32:
+                return (float) buf.getInt();
+            case MatDataTypes.miSINGLE:
+                return (float) buf.getFloat();
+            case MatDataTypes.miDOUBLE:
+                return (float) buf.getDouble();
+            default:
+                throw new IllegalArgumentException("Unknown data type: " + type);
+        }
     }
 
     private long readLong()

@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +28,7 @@ import com.jmatio.types.MLDouble;
 import com.jmatio.types.MLInt64;
 import com.jmatio.types.MLInt8;
 import com.jmatio.types.MLNumericArray;
+import com.jmatio.types.MLSingle;
 import com.jmatio.types.MLSparse;
 import com.jmatio.types.MLStructure;
 import com.jmatio.types.MLUInt64;
@@ -992,5 +994,38 @@ public class MatIOTest
         mfr.read( new File("test/bigsparse.mat"), MatFileReader.DIRECT_BYTE_BUFFER );
         
     }    
+    /**
+     * Tests the mxSINGLE
+     * @throws Exception
+     */
+    @Test
+    public void testSingle() throws Exception
+    {
+        
+        Float[] expected = new Float[] { 1.1f, 2.2f, 3.3f };
+        String  name = "arr";
+        
+        //create MLSingle type
+        MLSingle single = new MLSingle( name, expected, 1);
+        assertEquals(expected[0], single.get(0) );
+        assertEquals(expected[1], single.get(1) );
+        assertEquals(expected[2], single.get(2) );
+        
+        //Test writing the MLSingle
+        MatFileWriter writer = new MatFileWriter();
+        writer.write( "singletmp.mat", Arrays.asList( (MLArray)single) );
+        
+        //Test reading the MLSingle
+        MatFileReader reader = new MatFileReader();
+        MLSingle readSingle = (MLSingle) reader.read( new File("singletmp.mat") ).get( "arr" );
+        
+        assertEquals( single, readSingle );
+        
+        //Test reading the MLSingle generated natively by Matlab
+        MLSingle readSingleMatlabGenerated = (MLSingle) reader.read( new File("test/single.mat") ).get( "arr" );
+        
+        assertEquals( single, readSingleMatlabGenerated );
+        
+    }
     
 }

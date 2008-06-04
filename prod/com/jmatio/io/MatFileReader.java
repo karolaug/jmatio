@@ -31,6 +31,7 @@ import com.jmatio.types.MLEmptyArray;
 import com.jmatio.types.MLInt64;
 import com.jmatio.types.MLInt8;
 import com.jmatio.types.MLNumericArray;
+import com.jmatio.types.MLSingle;
 import com.jmatio.types.MLSparse;
 import com.jmatio.types.MLStructure;
 import com.jmatio.types.MLUInt64;
@@ -683,6 +684,20 @@ public class MatFileReader
                 break;
             case MLArray.mxDOUBLE_CLASS:
                 mlArray = new MLDouble(name, dims, type, attributes);
+                //read real
+                tag = new ISMatTag(buf);
+                tag.readToByteBuffer( ((MLNumericArray<?>) mlArray).getRealByteBuffer(),
+                                            (MLNumericArray<?>) mlArray );
+                //read complex
+                if ( mlArray.isComplex() )
+                {
+                    tag = new ISMatTag(buf);
+                    tag.readToByteBuffer( ((MLNumericArray<?>) mlArray).getImaginaryByteBuffer(),
+                            (MLNumericArray<?>) mlArray );
+                }
+                break;
+            case MLArray.mxSINGLE_CLASS:
+                mlArray = new MLSingle(name, dims, type, attributes);
                 //read real
                 tag = new ISMatTag(buf);
                 tag.readToByteBuffer( ((MLNumericArray<?>) mlArray).getRealByteBuffer(),

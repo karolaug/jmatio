@@ -293,6 +293,20 @@ public class MatFileWriter
                     tag.writeTo( dos );
                 }
                 break;
+            case MLArray.mxSINGLE_CLASS:
+                
+                tag = new OSArrayTag(MatDataTypes.miSINGLE, 
+                                ((MLNumericArray<?>)array).getRealByteBuffer() );
+                tag.writeTo( dos );
+                
+                //write real imaginary
+                if ( array.isComplex() )
+                {
+                    tag = new OSArrayTag(MatDataTypes.miSINGLE, 
+                            ((MLNumericArray<?>)array).getImaginaryByteBuffer() );
+                    tag.writeTo( dos );
+                }
+                break;
             case MLArray.mxUINT8_CLASS:
                 
                 tag = new OSArrayTag(MatDataTypes.miUINT8, 
