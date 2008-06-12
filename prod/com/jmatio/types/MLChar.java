@@ -5,11 +5,54 @@ import java.util.Arrays;
 public class MLChar extends MLArray implements GenericArrayCreator<Character>
 {
     Character[] chars;
+    
+    /**
+     * Creates the 1 x {@link String#length()} {@link MLChar} from the given
+     * String.
+     * 
+     * @param name the {@link MLArray} name
+     * @param value the String
+     */
     public MLChar(String name, String value )
     {
         this( name, new int[] { 1, value.length() } , MLArray.mxCHAR_CLASS, 0);
         set(value);
     }
+    
+    /**
+     * Create the {@link MLChar} from array of {@link String}s. 
+     * 
+     * @param name the {@link MLArray} name
+     * @param values the array of {@link String}s
+     */
+    public MLChar(String name, String[] values )
+    {
+        this( name, new int[] { values.length, values.length > 0 ? getMaxLength(values) : 0} , MLArray.mxCHAR_CLASS, 0);
+        
+        for ( int i = 0; i < values.length; i++ )
+        {
+            set( values[i], i );
+        }
+    }
+    /**
+     * Returns the maximum {@link String} length of array of {@link String}s. 
+     * @param values the array of {@link String}s
+     * @return the maximum {@link String} length of array of {@link String}s
+     */
+    private static int getMaxLength( String[] values )
+    {
+        int result = 0;
+        
+        for ( int i = 0, curr = 0; i < values.length; i++ )
+        {
+            if ( ( curr = values[i].length() ) > result )
+            {
+                result = curr;
+            }
+        }
+        return result;
+    }
+    
     /**
      * Added method to allow initialization of a char array representing 
      * an array of strings.
@@ -43,6 +86,10 @@ public class MLChar extends MLArray implements GenericArrayCreator<Character>
     {
         chars[index] = new Character(ch);
     }
+    /**
+     * Populates the {@link MLChar} with the {@link String} value.
+     * @param value the String value
+     */
     public void set(String value)
     {
         char[] cha = value.toCharArray();
@@ -109,7 +156,7 @@ public class MLChar extends MLArray implements GenericArrayCreator<Character>
             charbuff.append(getChar(m, n));
         }
         
-        return charbuff.toString();
+        return charbuff.toString().trim();
     }
     
     public String contentToString()

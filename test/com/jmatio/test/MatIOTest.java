@@ -1028,4 +1028,15 @@ public class MatIOTest
         
     }
     
+    @Test
+    public void testMLCharStringArray()
+    {
+        String[] expected = new String[] { "quick", "brown", "fox" };
+        
+        MLChar mlchar = new MLChar( "array", expected );
+        
+        assertEquals( expected[0], mlchar.getString(0) );
+        assertEquals( expected[1], mlchar.getString(1) );
+        assertEquals( expected[2], mlchar.getString(2) );
+    }
 }
