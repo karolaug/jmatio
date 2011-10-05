@@ -1,0 +1,28 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+DEB_SOURCE_PACKAGE=jmatio
+DEB_UPSTREAM_VERSION=0.1-alpha
+
+%:
+	dh $@ --buildsystem ant
+
+override_dh_auto_build:
+	dh_auto_build
+	mv build/JMatIO/lib/jmatio.jar build/$(DEB_SOURCE_PACKAGE)-$(DEB_UPSTREAM_VERSION).jar
+
+override_dh_install:
+	dh_install -plib$(DEB_SOURCE_PACKAGE)-java \
+		build/$(DEB_SOURCE_PACKAGE)-$(DEB_UPSTREAM_VERSION).jar\
+		usr/share/java/
+	dh_link -plib$(DEB_SOURCE_PACKAGE)-java \
+		usr/share/java/$(DEB_SOURCE_PACKAGE)-$(DEB_UPSTREAM_VERSION).jar \
+		usr/share/java/$(DEB_SOURCE_PACKAGE).jar

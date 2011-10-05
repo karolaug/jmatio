@@ -1,0 +1,14 @@
+Source: jmatio
+Section: java
+Priority: extra
+Maintainer: Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl>
+Build-Depends: debhelper (>= 8.0.0)
+Standards-Version: 3.9.2
+Homepage: http://jmatio.sf.net
+Vcs-Git: https://jmatio.svn.sourceforge.net/svnroot/jmatio
+#Vcs-Browser:
+
+Package: libjmatio-java
+Architecture: all
+Depends: ${misc:Depends}
+Description: Java library to read matlab files
