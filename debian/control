@@ -5,8 +5,8 @@ Maintainer: Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl>
 Build-Depends: debhelper (>= 8.0.0)
 Standards-Version: 3.9.2
 Homepage: http://jmatio.sf.net
-Vcs-Git: https://jmatio.svn.sourceforge.net/svnroot/jmatio
-#Vcs-Browser:
+Vcs-Git: git://escher.fuw.edu.pl/git/jmatio
+Vcs-Browser: http://escher.fuw.edu.pl/git/jmatio
 
 Package: libjmatio-java
 Architecture: all
