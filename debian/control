@@ -1,8 +1,8 @@
 Source: jmatio
 Section: java
-Priority: extra
+Priority: optional
 Maintainer: Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl>
-Build-Depends: debhelper (>= 8.0.0)
+Build-Depends: debhelper (>= 8.0.0), ant, java5-sdk
 Standards-Version: 3.9.2
 Homepage: http://jmatio.sf.net
 Vcs-Git: git://escher.fuw.edu.pl/git/jmatio
@@ -11,4 +11,9 @@ Vcs-Browser: http://escher.fuw.edu.pl/git/jmatio
 Package: libjmatio-java
 Architecture: all
 Depends: ${misc:Depends}
-Description: Java library to read matlab files
+Description: Java library to read and write matlab files
+  Matlab's MAT-file I/O API in JAVA. Supports Matlab 5 MAT-file format
+  reading and writing. Written in pure JAVA.
+  .
+  Currently supported data types are Structure and arrays of Double,
+  UInt8, Int8, UInt64, Int64, Char, Cell, and Sparse arrays.
