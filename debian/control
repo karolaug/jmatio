@@ -1,12 +1,12 @@
 Source: jmatio
 Section: java
 Priority: optional
-Maintainer: Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl>
+Maintainer: Karol Auguštin <karol@augustin.pl>
 Build-Depends: debhelper (>= 8.0.0), ant, openjdk-6-jdk | java5-sdk
 Standards-Version: 3.9.2
 Homepage: http://sourceforge.net/projects/jmatio/
-Vcs-Git: git://escher.fuw.edu.pl/git/jmatio
-Vcs-Browser: http://escher.fuw.edu.pl/git/jmatio
+Vcs-Git: git://git.braintech.pl/jmatio.git
+Vcs-Browser: http://git.braintech.pl/jmatio.git
 
 Package: libjmatio-java
 Architecture: all
